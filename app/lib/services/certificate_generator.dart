@@ -204,7 +204,6 @@ class CertificateGenerator {
                       wipeResult.logHash,
                       style: const pw.TextStyle(
                         fontSize: 9,
-                        fontFamily: 'Courier',
                       ),
                     ),
                   ],

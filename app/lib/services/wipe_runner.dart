@@ -35,8 +35,8 @@ class WipeRunner {
   /// Build the command and arguments for the wipe script
   List<dynamic> _buildCommand() {
     if (isWindows) {
-      // Windows: PowerShell diskpart_clean_all.ps1
-      final scriptPath = '../../scripts/windows/diskpart_clean_all.ps1';
+      // Windows: PowerShell diskpart_clean_format.ps1 with auto-elevation
+      final scriptPath = r'E:\Mavericks_Technocrats_Hackathon_2025\scripts\windows\diskpart_clean_format.ps1';
       final deviceNum = demoMode ? '-1' : devicePathOrNumber;
       
       final args = [
@@ -46,6 +46,12 @@ class WipeRunner {
         scriptPath,
         '-DeviceNumber',
         deviceNum,
+        '-FileSystem',
+        'FAT32',
+        '-VolumeName',
+        'USB_DRIVE',
+        '-AutoElevate', // Automatically request UAC elevation
+        '-SkipConfirmation', // Skip the YES prompt - fully automatic!
       ];
 
       if (useDryRun || demoMode) {
@@ -119,12 +125,7 @@ class WipeRunner {
         },
       );
 
-      // If not in dry-run mode and needs confirmation, send "YES" to stdin
-      if (!useDryRun && !demoMode) {
-        _process!.stdin.writeln('YES');
-        await _process!.stdin.flush();
-        await _process!.stdin.close();
-      }
+      // No need to send YES to stdin - using -SkipConfirmation flag instead
 
       // Wait for process to complete
       final exitCode = await _process!.exitCode;

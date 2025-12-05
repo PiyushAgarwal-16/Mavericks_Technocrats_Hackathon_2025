@@ -40,8 +40,9 @@ class StorageDevice {
     return '${(sizeBytes! / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
-  /// Whether this device is safe to wipe
-  bool get isSafeToWipe => !isSystemDevice && !isMounted;
+  /// Whether this device is safe to wipe (only blocks system devices, not mounted drives)
+  /// Note: Mounted drives are handled automatically by the wipe script
+  bool get isSafeToWipe => !isSystemDevice;
 
   @override
   String toString() {
