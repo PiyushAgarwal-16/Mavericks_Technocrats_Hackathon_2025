@@ -109,7 +109,7 @@ export const VerifyPage: React.FC = () => {
             <AlertTriangle className="text-red-400 w-8 h-8 flex-shrink-0" />
             <div>
               <h3 className="text-red-400 font-bold text-lg">Verification Failed</h3>
-              <p className="text-red-400/80">{error}</p>
+              <p className="text-red-400/80 whitespace-pre-line">{error}</p>
             </div>
           </div>
         )}
