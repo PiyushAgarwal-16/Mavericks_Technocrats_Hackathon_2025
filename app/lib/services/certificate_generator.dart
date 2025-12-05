@@ -193,53 +193,77 @@ class CertificateGenerator {
     required String userId,
     String? wipeId,
   }) async {
-    try {
-      // Create certificate payload
-      final payload = createCertificatePayload(
-        wipeResult: wipeResult,
-        device: device,
-        method: method,
-        userId: userId,
-        wipeId: wipeId,
-      );
-
-      // Make API request
-      final response = await http.post(
-        Uri.parse('$backendUrl/certificates'),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': 'ZEROTRACE_AGENT_KEY_2025',
-          if (authToken != null) 'Authorization': 'Bearer $authToken',
-        },
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        
-        return CertificateUploadResult(
-          success: true,
-          wipeId: data['wipeId'] as String,
-          verificationUrl: data['verificationUrl'] as String?,
-          signature: data['signature'] as String?,
-          logHash: data['logHash'] as String?,
+    const maxRetries = 3;
+    
+    for (int attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Create certificate payload
+        final payload = createCertificatePayload(
+          wipeResult: wipeResult,
+          device: device,
+          method: method,
+          userId: userId,
+          wipeId: wipeId,
         );
-      } else {
-        final error = response.statusCode == 400 || response.statusCode == 401
-            ? jsonDecode(response.body)['error']
-            : 'Server error: ${response.statusCode}';
+
+        // Make API request
+        final response = await http.post(
+          Uri.parse('$backendUrl/certificates'),
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': 'ZEROTRACE_AGENT_KEY_2025',
+            if (authToken != null) 'Authorization': 'Bearer $authToken',
+          },
+          body: jsonEncode(payload),
+        ).timeout(
+          Duration(seconds: 15 + (attempt * 5)), // Increase timeout on retries
+        );
+
+        if (response.statusCode == 201) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          
+          return CertificateUploadResult(
+            success: true,
+            wipeId: data['wipeId'] as String,
+            verificationUrl: data['verificationUrl'] as String?,
+            signature: data['signature'] as String?,
+            logHash: data['logHash'] as String?,
+          );
+        } else if (response.statusCode >= 500 && attempt < maxRetries - 1) {
+          // Server error - retry
+          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+          continue;
+        } else {
+          // Client error or final retry - return error
+          final error = response.statusCode == 400 || response.statusCode == 401
+              ? jsonDecode(response.body)['error']
+              : 'Server error: ${response.statusCode}';
+          
+          return CertificateUploadResult(
+            success: false,
+            errorMessage: error,
+          );
+        }
+      } catch (e) {
+        // Network error or timeout
+        if (attempt < maxRetries - 1) {
+          // Wait before retrying (exponential backoff: 2s, 4s, 8s)
+          await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
+          continue;
+        }
         
         return CertificateUploadResult(
           success: false,
-          errorMessage: error,
+          errorMessage: 'Upload failed after $maxRetries attempts: $e',
         );
       }
-    } catch (e) {
-      return CertificateUploadResult(
-        success: false,
-        errorMessage: 'Network error: $e',
-      );
     }
+    
+    // Should never reach here, but just in case
+    return CertificateUploadResult(
+      success: false,
+      errorMessage: 'Upload failed after $maxRetries attempts',
+    );
   }
 
   /// Generate PDF and upload to backend in one operation

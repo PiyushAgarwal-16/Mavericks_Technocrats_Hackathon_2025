@@ -25,11 +25,31 @@ export const VerifyPage: React.FC = () => {
       const data = await api.certificates.verify(wipeId.trim());
       setResult(data);
     } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-        err.message ||
-        'Failed to verify certificate'
-      );
+      // Provide helpful error messages based on the error type
+      if (err.response?.status === 404) {
+        setError(
+          `Certificate not found in our system. This could mean: \n` +
+          `• The wipe hasn't been uploaded yet (check your device's internet connection)\n` +
+          `• The certificate ID is incorrect\n` +
+          `• The ID format is valid but no matching wipe exists\n\n` +
+          `If you just generated this certificate, please wait a moment and try again.`
+        );
+      } else if (!wipeId.match(/^ZT-\d+-[A-F0-9]+$/i)) {
+        setError(
+          'Invalid certificate ID format. Expected format: ZT-TIMESTAMP-RANDOM\n' +
+          'Example: ZT-176496.....'
+        );
+      } else if (err.code === 'ERR_NETWORK' || err.message.includes('Network')) {
+        setError(
+          'Unable to reach verification server. Please check your internet connection and try again.'
+        );
+      } else {
+        setError(
+          err.response?.data?.error ||
+          err.message ||
+          'Failed to verify certificate. Please try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }
