@@ -7,6 +7,8 @@ import { VerifyPage } from './pages/VerifyPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
+import { DownloadPage } from './pages/DownloadPage';
+import { ComparePage } from './pages/ComparePage';
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/download" element={<DownloadPage />} />
+          <Route path="/compare" element={<ComparePage />} />
           <Route
             path="/dashboard"
             element={
