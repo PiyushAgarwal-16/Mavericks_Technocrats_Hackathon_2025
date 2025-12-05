@@ -1,221 +1,261 @@
-# Scripts Documentation
+# ZeroTrace Wipe Scripts
 
-This directory contains device wipe scripts for Windows and Linux platforms.
+Production-ready device wipe scripts for Windows (PowerShell) and Linux (Bash) with comprehensive safety features, logging, and SIMULATE mode for testing.
 
-## ⚠️ SAFETY WARNINGS
+## 🔐 Safety Features
 
-**CRITICAL: These scripts perform DESTRUCTIVE operations that will PERMANENTLY ERASE all data on target devices.**
+Both scripts implement **identical safety philosophy**:
 
-### Before Running ANY Script:
+- ✅ **--confirm flag required** - Prevents accidental execution
+- ✅ **--dry-run mode** - Shows what would happen without executing
+- ✅ **Large WARNING headers** - Clear visual indication of danger
+- ✅ **Double confirmation** - Requires typing "YES" before execution
+- ✅ **Device validation** - Prevents accidental wipes
+- ✅ **Timestamped logging** - All actions logged with timestamps
+- ✅ **SHA256 log hashing** - Cryptographic verification of logs
+- ✅ **Exit codes** - Non-zero on failure for automation
+- ✅ **SIMULATE mode** - Demo mode for Flutter/testing (DeviceNumber=-1 or device=SIMULATE)
 
-1. **ALWAYS** run with `--dry-run` first to verify target device
-2. **BACKUP** any data you need from the device
-3. **VERIFY** device identifier multiple times
-4. **UNMOUNT** all partitions on the device
-5. **NEVER** run on system/boot drives
+## 📁 Scripts
 
-## Windows Scripts
-
-### wipe-device.ps1
-
-PowerShell script for Windows device wiping.
+### Windows: `diskpart_clean_all.ps1`
+PowerShell script using diskpart's "clean all" command.
 
 **Requirements:**
-- Windows 10/11 or Windows Server
+- Windows 10/11
 - PowerShell 5.1+
 - Administrator privileges
 
 **Usage:**
-
 ```powershell
-# Test mode (REQUIRED first step)
-.\wipe-device.ps1 -Device 1 -DryRun
+# Dry run (show what would happen)
+.\diskpart_clean_all.ps1 -DeviceNumber 1 -DryRun
 
-# Real wipe with confirmation
-.\wipe-device.ps1 -Device 1 -Confirm -Method auto -Passes 1
+# Actual wipe (requires confirmation)
+.\diskpart_clean_all.ps1 -DeviceNumber 1 -Confirm
 
-# Specific method
-.\wipe-device.ps1 -Device 2 -Confirm -Method overwrite-zero -Passes 3
+# Simulate mode for testing
+.\diskpart_clean_all.ps1 -DeviceNumber -1 -Confirm
 ```
 
 **Parameters:**
-- `-Device <number|path>`: Disk number (e.g., 1) or path (e.g., \\.\PhysicalDrive1)
-- `-DryRun`: Simulate without writing (ALWAYS use first)
-- `-Confirm`: Required flag for actual execution
-- `-Method <string>`: Wipe method (auto, secure-erase, overwrite-zero, overwrite-random)
-- `-Passes <int>`: Number of overwrite passes (1-7, default: 1)
+- `-DeviceNumber` (required) - Disk number (0, 1, 2...) or -1 for SIMULATE
+- `-DryRun` - Show commands without executing
+- `-Confirm` - REQUIRED for actual execution
+- `-LogDir` - Log directory (default: ./logs)
 
-**Safety Features:**
-- Prevents wiping system/boot disks
-- Checks for mounted partitions
-- Requires explicit confirmation
-- Validates disk exists
-- Administrator check
-
-## Linux Scripts
-
-### wipe-device.sh
-
-Bash script for Linux device wiping.
+### Linux: `purge_dd.sh`
+Bash script with multiple wipe methods (dd zero/random, hdparm).
 
 **Requirements:**
-- Linux (Ubuntu, Debian, RHEL, etc.)
+- Linux (Ubuntu, Debian, CentOS, etc.)
 - Bash 4.0+
-- Root privileges (sudo)
+- Root/sudo privileges
 - Optional: hdparm (for ATA Secure Erase)
 
 **Usage:**
+```bash
+# Dry run (show what would happen)
+./purge_dd.sh --device=/dev/sdb --method=zero --dry-run
+
+# Actual wipe (requires confirmation)
+./purge_dd.sh --device=/dev/sdb --method=zero --confirm
+
+# ATA Secure Erase with auto-fallback
+./purge_dd.sh --device=/dev/sdb --method=hdparm --confirm
+
+# Simulate mode for testing
+./purge_dd.sh --device=SIMULATE --method=zero --confirm
+```
+
+**Arguments:**
+- `--device=<device>` (required) - Device path (e.g., /dev/sdb) or "SIMULATE"
+- `--method=<method>` (required) - Wipe method: zero, random, or hdparm
+- `--dry-run` - Show commands without executing
+- `--confirm` - REQUIRED for actual execution
+- `--log-dir=<dir>` - Log directory (default: ./logs)
+- `--no-fallback` - Disable hdparm→zero auto-fallback
+
+## 🎯 Wipe Methods
+
+### Windows (diskpart)
+- **clean all** - Zeros all sectors (purge-level)
+
+### Linux (dd / hdparm)
+- **zero** - Overwrite with zeros (`dd if=/dev/zero`)
+- **random** - Overwrite with random data (`dd if=/dev/urandom`)
+- **hdparm** - ATA Secure Erase (firmware-level, with auto-fallback to zero)
+
+## 📋 Usage Examples
+
+### Windows Examples
+
+```powershell
+# Check available disks first
+Get-Disk
+
+# Dry run to see what would happen
+.\diskpart_clean_all.ps1 -DeviceNumber 1 -DryRun
+
+# Execute wipe with confirmation
+.\diskpart_clean_all.ps1 -DeviceNumber 1 -Confirm
+# (Will prompt: Type 'YES' to continue)
+
+# Custom log directory
+.\diskpart_clean_all.ps1 -DeviceNumber 2 -Confirm -LogDir "C:\WipeLogs"
+
+# SIMULATE mode for testing
+.\diskpart_clean_all.ps1 -DeviceNumber -1 -Confirm
+```
+
+### Linux Examples
 
 ```bash
-# Test mode (REQUIRED first step)
-sudo ./wipe-device.sh --device /dev/sdb --dry-run
+# Check available devices first
+lsblk
 
-# Real wipe with confirmation
-sudo ./wipe-device.sh --device /dev/sdb --confirm --method auto --passes 1
+# Dry run to see what would happen
+./purge_dd.sh --device=/dev/sdb --method=zero --dry-run
 
-# Specific method
-sudo ./wipe-device.sh --device /dev/sdc --confirm --method overwrite-random --passes 3
+# Execute zero wipe with confirmation
+./purge_dd.sh --device=/dev/sdb --method=zero --confirm
+# (Will prompt: Type 'YES' to continue)
+
+# Random data wipe
+./purge_dd.sh --device=/dev/sdc --method=random --confirm
+
+# ATA Secure Erase (with automatic fallback)
+./purge_dd.sh --device=/dev/sdb --method=hdparm --confirm
+
+# ATA Secure Erase without fallback (fails if not supported)
+./purge_dd.sh --device=/dev/sdb --method=hdparm --confirm --no-fallback
+
+# Custom log directory
+./purge_dd.sh --device=/dev/sdb --method=zero --confirm --log-dir=/var/log/wipes
+
+# SIMULATE mode for testing
+./purge_dd.sh --device=SIMULATE --method=hdparm --confirm
 ```
 
-**Parameters:**
-- `--device <path>`: Device path (e.g., /dev/sdb)
-- `--dry-run`: Simulate without writing (ALWAYS use first)
-- `--confirm`: Required flag for actual execution
-- `--method <string>`: Wipe method (auto, secure-erase, overwrite-zero, overwrite-random)
-- `--passes <int>`: Number of overwrite passes (1-7, default: 1)
+## 📊 Logging
 
-**Safety Features:**
-- Checks for mounted filesystems
-- Validates device exists
-- Requires explicit confirmation
-- Root privilege check
-- Validates device is block device
+### Log Files
+Both scripts create timestamped log files:
 
-## Wipe Methods
-
-### 1. Auto (Recommended)
-
-Attempts ATA Secure Erase first, falls back to overwrite if unavailable.
-
-- **Windows:** Falls back to diskpart + zero-fill
-- **Linux:** Uses hdparm for Secure Erase, dd for fallback
-
-### 2. Secure Erase
-
-Native ATA Secure Erase command (SATA/NVMe SSDs).
-
-- **Pros:** Fastest, most secure for SSDs
-- **Cons:** Requires unfrozen security state, may not be available
-- **Standard:** ATA Security Feature Set
-
-### 3. Overwrite (Zero)
-
-Writes zeros to entire device.
-
-- **Pros:** Universal compatibility, NIST compliant (1 pass)
-- **Cons:** Slower than Secure Erase
-- **Standard:** NIST SP 800-88 (1 pass sufficient)
-
-### 4. Overwrite (Random)
-
-Writes random data to entire device.
-
-- **Pros:** Enhanced security for classified data
-- **Cons:** Slowest method
-- **Standard:** DoD 5220.22-M (3 passes)
-
-## Output Format
-
-All scripts output JSON for programmatic consumption:
-
-```json
-{
-  "success": true,
-  "device": "/dev/sdb",
-  "method": "ATA Secure Erase",
-  "passes": 1,
-  "durationSeconds": 3600,
-  "timestamp": "2025-01-15T10:30:00Z",
-  "dryRun": false
-}
+**Windows:**
+```
+./logs/diskwipe_disk1_20251205_143022.log
 ```
 
-## Integration with Backend
+**Linux:**
+```
+./logs/diskwipe__dev_sdb_20251205_143022.log
+```
 
-After successful wipe, use the JSON output to create a certificate:
+### Log Contents
+Each log contains:
+- Timestamp of operation
+- Device information
+- Method used
+- Full command output
+- Duration
+- Exit code
+- SHA256 hash (computed and displayed at end)
 
+### Example Log Output
+```
+[2025-12-05 14:30:22] Starting disk wipe operation
+[2025-12-05 14:30:22] Target: Disk 1
+[2025-12-05 14:30:22] Method: diskpart CLEAN ALL
+[2025-12-05 14:30:22] Disk Info: Size=120.03GB, PartitionStyle=GPT
+[2025-12-05 14:30:23] Executing diskpart...
+[2025-12-05 14:32:45] Wipe completed in 142.5 seconds
+[2025-12-05 14:32:45] Exit Code: 0
+```
+
+## 🧪 Testing with SIMULATE Mode
+
+Both scripts include a **SIMULATE mode** for safe testing without actual hardware:
+
+### Windows SIMULATE
+```powershell
+.\diskpart_clean_all.ps1 -DeviceNumber -1 -Confirm
+```
+
+### Linux SIMULATE
 ```bash
-# Linux example
-RESULT=$(sudo ./wipe-device.sh --device /dev/sdb --confirm --method auto | tail -n 7)
-
-# Extract data and POST to API
-curl -X POST http://localhost:5000/api/certificates \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "deviceInfo": {
-      "serialNumber": "...",
-      "model": "...",
-      "capacity": "...",
-      "type": "SSD"
-    },
-    "wipeDetails": ...,
-    "operator": {...}
-  }'
+./purge_dd.sh --device=SIMULATE --method=zero --confirm
 ```
 
-## Troubleshooting
+SIMULATE mode:
+- Generates realistic demo logs
+- No actual disk operations
+- Safe for testing Flutter apps
+- Returns success (exit code 0)
+- Produces valid SHA256 hash
 
-### Windows
+## ⚠️ Safety Warnings
 
-**"Access Denied"**
-- Run PowerShell as Administrator
-- Check execution policy: `Get-ExecutionPolicy`
-- Set if needed: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
+### DO NOT run these scripts:
+- Without testing in SIMULATE mode first
+- Without verifying the device number/path
+- On devices with mounted partitions
+- On your system drive
+- Without backups of important data
+- In production without dry-run testing
 
-**"Disk is system disk"**
-- Script prevents wiping system disks for safety
-- Verify disk number with `Get-Disk`
+### ALWAYS:
+- Use --dry-run first
+- Double-check device identifiers
+- Unmount all partitions
+- Verify backups before proceeding
+- Test with SIMULATE mode
+- Review logs after completion
 
-### Linux
+## 🔧 Integration with Backend
 
-**"Permission denied"**
-- Run with sudo: `sudo ./wipe-device.sh ...`
-- Make executable: `chmod +x wipe-device.sh`
+Both scripts output JSON-compatible data for easy backend integration:
 
-**"Device is mounted"**
-- Unmount all partitions: `sudo umount /dev/sdb*`
-- Check with: `mount | grep sdb`
+### Script Output Format
+```
+Log File: ./logs/diskwipe_disk1_20251205_143022.log
+Log SHA256: abc123def456...
+Exit Code: 0
+```
 
-**"hdparm not found"**
-- Install hdparm: `sudo apt install hdparm` (Debian/Ubuntu)
-- Script will fall back to dd overwrite
+### Backend Integration Example
+```javascript
+const { exec } = require('child_process');
 
-## Best Practices
+// Windows
+exec(
+  'powershell -File ./scripts/windows/diskpart_clean_all.ps1 -DeviceNumber 1 -Confirm',
+  (error, stdout, stderr) => {
+    const logHashMatch = stdout.match(/Log SHA256: ([a-f0-9]+)/);
+    const exitCode = error ? error.code : 0;
+    // Process results...
+  }
+);
 
-1. **Always verify device identifier** before running
-2. **Start with --dry-run** to test configuration
-3. **Use single pass** for most use cases (NIST compliant)
-4. **Use 3+ passes** only for classified/sensitive data
-5. **Document certificate ID** for future verification
-6. **Test verification portal** after certificate creation
+// Linux
+exec(
+  './scripts/linux/purge_dd.sh --device=/dev/sdb --method=zero --confirm <<< "YES"',
+  (error, stdout, stderr) => {
+    const logHashMatch = stdout.match(/Log SHA256: ([a-f0-9]+)/);
+    const exitCode = error ? error.code : 0;
+    // Process results...
+  }
+);
+```
 
-## Standards Compliance
+## 📈 Exit Codes
 
-- **NIST SP 800-88 Rev. 1**: Clear/Purge guidelines
-- **DoD 5220.22-M**: 3-pass overwrite (legacy)
-- **IEEE 2883-2022**: Sanitization standard
-- **GDPR**: Right to erasure compliance
+Both scripts use standard exit codes:
 
-## Support
+- `0` - Success
+- `1` - General error
+- Other non-zero - Specific failures
 
-For issues or questions:
-1. Check this documentation
-2. Review script comments
-3. Check GitHub issues
-4. Contact team members
+## 📄 License
 
----
-
-**Last Updated:** 2025-01-15  
-**Version:** 1.0.0-MVP
+MIT
