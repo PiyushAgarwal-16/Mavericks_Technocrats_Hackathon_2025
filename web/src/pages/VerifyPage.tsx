@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { api, VerificationResult } from '../services/api';
+import { Search, CheckCircle, XCircle, FileText, Smartphone, HardDrive, Calendar, Key, AlertTriangle, ArrowLeft, Loader2, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const VerifyPage: React.FC = () => {
   const [wipeId, setWipeId] = useState('');
@@ -9,7 +11,7 @@ export const VerifyPage: React.FC = () => {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!wipeId.trim()) {
       setError('Please enter a Wipe ID');
       return;
@@ -24,8 +26,8 @@ export const VerifyPage: React.FC = () => {
       setResult(data);
     } catch (err: any) {
       setError(
-        err.response?.data?.error || 
-        err.message || 
+        err.response?.data?.error ||
+        err.message ||
         'Failed to verify certificate'
       );
     } finally {
@@ -34,187 +36,187 @@ export const VerifyPage: React.FC = () => {
   };
 
   const isValid = result?.verified && result?.certificate;
-  
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="container mx-auto max-w-3xl">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-dark text-white font-sans relative overflow-x-hidden p-4 md:p-8">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+      <div className="fixed top-20 right-0 w-[500px] h-[500px] bg-cyan/10 blur-[150px] rounded-full -z-10"></div>
+
+      <div className="container mx-auto max-w-4xl relative z-10">
+
+        {/* Header */}
+        <div className="mb-8 flex items-center justify-between">
+          <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft size={20} /> Back
+          </Link>
+        </div>
+
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">
             Verify Certificate
           </h1>
-          <p className="text-gray-600 mb-8">
-            Enter a Wipe ID to verify the authenticity of a wipe certificate
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Cryptographic verification of data destruction. Enter your unique Wipe ID below.
           </p>
+        </div>
 
-          {/* Verify Form */}
-          <form onSubmit={handleVerify} className="mb-8">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <input
-                type="text"
-                value={wipeId}
-                onChange={(e) => setWipeId(e.target.value)}
-                placeholder="Enter Wipe ID (e.g., ZT-1234567890-ABC123)"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loading}
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-8 rounded-lg transition duration-200"
-              >
-                {loading ? 'Verifying...' : 'Verify'}
-              </button>
-            </div>
+        {/* Verify Form */}
+        <div className="glass-panel p-2 rounded-2xl mb-12 max-w-2xl mx-auto">
+          <form onSubmit={handleVerify} className="relative flex items-center">
+            <Search className="absolute left-4 text-gray-500 w-6 h-6" />
+            <input
+              type="text"
+              value={wipeId}
+              onChange={(e) => setWipeId(e.target.value)}
+              placeholder="Paste Wipe ID (e.g. ZT-1234567890-ABC123)"
+              className="w-full bg-transparent border-none text-white px-14 py-4 focus:ring-0 placeholder:text-gray-600 text-lg font-mono tracking-wide"
+              disabled={loading}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="absolute right-2 px-6 py-2 rounded-xl bg-gradient-to-r from-primary to-cyan hover:opacity-90 transition-opacity text-white font-bold disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'verify_hash'}
+            </button>
           </form>
+        </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center">
-                <span className="text-red-600 text-2xl mr-3">⚠️</span>
-                <div>
-                  <h3 className="text-red-800 font-semibold">Verification Failed</h3>
-                  <p className="text-red-700">{error}</p>
+        {/* Error Message */}
+        {error && (
+          <div className="max-w-2xl mx-auto bg-red-500/10 border border-red-500/20 rounded-2xl p-6 mb-8 flex items-center gap-4 animate-in fade-in slide-in-from-top-4">
+            <AlertTriangle className="text-red-400 w-8 h-8 flex-shrink-0" />
+            <div>
+              <h3 className="text-red-400 font-bold text-lg">Verification Failed</h3>
+              <p className="text-red-400/80">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Result Display */}
+        {result && (
+          <div className="glass-panel rounded-3xl p-8 md:p-12 animate-in slide-in-from-bottom-8 duration-500">
+
+            {/* Validity Badge */}
+            <div className="flex flex-col items-center mb-12">
+              {isValid ? (
+                <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full bg-green-500/10 border-2 border-green-500 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                    <CheckCircle className="w-12 h-12 text-green-400" />
+                  </div>
+                  <h2 className="text-3xl font-heading font-bold text-green-400 tracking-wider">CERTIFICATE VALID</h2>
+                  <p className="text-green-400/60 mt-2 font-mono uppercase text-sm">Signature Verified • Integrity Confirmed</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                    <XCircle className="w-12 h-12 text-red-500" />
+                  </div>
+                  <h2 className="text-3xl font-heading font-bold text-red-500 tracking-wider">CERTIFICATE INVALID</h2>
+                  <p className="text-red-500/60 mt-2 font-mono uppercase text-sm">Signature Mismatch • Integrity Compromised</p>
+                </div>
+              )}
+            </div>
+
+            {/* Certificate Details Grid */}
+            <div className="grid md:grid-cols-2 gap-8">
+
+              {/* Meta Info */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold font-heading mb-4 text-cyan flex items-center gap-2">
+                  <FileText size={20} /> Session Metadata
+                </h3>
+
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Wipe ID</label>
+                  <p className="font-mono text-white break-all">{result.certificate.wipeId}</p>
+                </div>
+
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Date & Time</label>
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-gray-400" />
+                    <p className="text-white">{new Date(result.certificate.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Audit Authority</label>
+                  <div className="flex items-center gap-2">
+                    <User size={16} className="text-gray-400" />
+                    <p className="text-white">
+                      {result.user?.email || 'Unknown Issuer'}
+                      {result.user?.role === 'admin' && <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30">Admin</span>}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Result Display */}
-          {result && (
-            <div>
-              {/* Validity Badge */}
-              <div className="mb-6 text-center">
-                {isValid ? (
-                  <div className="inline-flex items-center bg-green-100 text-green-800 px-6 py-3 rounded-full border-2 border-green-300">
-                    <span className="text-3xl mr-3">✅</span>
-                    <span className="text-2xl font-bold">VALID</span>
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center bg-red-100 text-red-800 px-6 py-3 rounded-full border-2 border-red-300">
-                    <span className="text-3xl mr-3">❌</span>
-                    <span className="text-2xl font-bold">INVALID</span>
-                  </div>
-                )}
-              </div>
+              {/* Technical Info */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold font-heading mb-4 text-primary flex items-center gap-2">
+                  <HardDrive size={20} /> Technical Data
+                </h3>
 
-              {/* Certificate Details */}
-              <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Certificate Details
-                </h2>
-
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Wipe ID</label>
-                    <p className="text-gray-900 font-mono bg-white p-2 rounded border">
-                      {result.certificate.wipeId}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Device Model</label>
-                    <p className="text-gray-900 bg-white p-2 rounded border">
-                      {result.certificate.deviceModel}
-                    </p>
-                  </div>
-
-                  {result.certificate.serialNumber && (
-                    <div>
-                      <label className="text-sm font-semibold text-gray-600">Serial Number</label>
-                      <p className="text-gray-900 font-mono bg-white p-2 rounded border">
-                        {result.certificate.serialNumber}
-                      </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                    <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Device Model</label>
+                    <div className="flex items-center gap-2">
+                      <Smartphone size={16} className="text-gray-400" />
+                      <p className="text-white truncate" title={result.certificate.deviceModel}>{result.certificate.deviceModel}</p>
                     </div>
-                  )}
-
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Wipe Method</label>
-                    <p className="text-gray-900 bg-white p-2 rounded border uppercase">
-                      {result.certificate.method}
-                    </p>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Timestamp</label>
-                    <p className="text-gray-900 bg-white p-2 rounded border">
-                      {new Date(result.certificate.timestamp).toLocaleString()}
-                    </p>
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                    <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Wipe Method</label>
+                    <p className="font-mono text-cyan">{result.certificate.method}</p>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="text-sm font-semibold text-gray-600">Log Hash (SHA256)</label>
-                    <p className="text-gray-900 font-mono text-sm bg-white p-2 rounded border break-all">
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  <label className="text-xs text-gray-500 uppercase tracking-wider mb-1 block">Cryptographic Hash (SHA-256)</label>
+                  <div className="flex items-start gap-2">
+                    <Key size={16} className="text-gray-400 mt-1 flex-shrink-0" />
+                    <p className="font-mono text-xs text-gray-300 break-all leading-relaxed">
                       {result.certificate.logHash}
                     </p>
                   </div>
-
-                  {/* Verification Status */}
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                    <div>
-                      <label className="text-sm font-semibold text-gray-600">Signature Valid</label>
-                      <p className={`font-semibold ${result.signatureValid ? 'text-green-600' : 'text-red-600'}`}>
-                        {result.signatureValid ? '✅ Yes' : '❌ No'}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-semibold text-gray-600">Log Hash Matches</label>
-                      <p className={`font-semibold ${result.logHashMatches ? 'text-green-600' : 'text-red-600'}`}>
-                        {result.logHashMatches ? '✅ Yes' : '❌ No'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Wipe Log Details */}
-                  {result.wipeLog && (
-                    <div className="pt-4 border-t">
-                      <h3 className="text-lg font-bold text-gray-900 mb-3">Wipe Log Details</h3>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-sm font-semibold text-gray-600">Device Path</label>
-                          <p className="text-gray-900 font-mono bg-white p-2 rounded border">
-                            {result.wipeLog.devicePath}
-                          </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-semibold text-gray-600">Duration</label>
-                            <p className="text-gray-900 bg-white p-2 rounded border">
-                              {result.wipeLog.duration} seconds
-                            </p>
-                          </div>
-                          <div>
-                            <label className="text-sm font-semibold text-gray-600">Exit Code</label>
-                            <p className={`font-semibold p-2 rounded border ${
-                              result.wipeLog.exitCode === 0 ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-                            }`}>
-                              {result.wipeLog.exitCode}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* User Info */}
-                  {result.user && (
-                    <div className="pt-4 border-t">
-                      <label className="text-sm font-semibold text-gray-600">Issued By</label>
-                      <p className="text-gray-900 bg-white p-2 rounded border">
-                        {result.user.email}
-                        {result.user.role === 'admin' && (
-                          <span className="ml-2 bg-purple-600 text-white px-2 py-1 rounded text-xs">
-                            ADMIN
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  )}
                 </div>
+
+                {/* Verification Checks */}
+                <div className="bg-black/20 rounded-xl p-4 border border-white/5 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400">Digital Signature</span>
+                    <span className={`text-sm font-bold ${result.signatureValid ? 'text-green-400' : 'text-red-400'}`}>
+                      {result.signatureValid ? 'VERIFIED' : 'FAILED'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-400">Log Integrity</span>
+                    <span className={`text-sm font-bold ${result.logHashMatches ? 'text-green-400' : 'text-red-400'}`}>
+                      {result.logHashMatches ? 'MATCHED' : 'EVALUATION FAILED'}
+                    </span>
+                  </div>
+                </div>
+
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Wipe Log Details (Collapsible or visible) */}
+            {result.wipeLog && (
+              <div className="mt-8 pt-8 border-t border-white/10">
+                <h3 className="text-lg font-bold font-heading mb-4 text-gray-300">Execution Log</h3>
+                <div className="bg-black/40 rounded-xl p-4 font-mono text-xs text-gray-400 border border-white/5 overflow-x-auto">
+                  <p><span className="text-cyan">$ target_device:</span> {result.wipeLog.devicePath}</p>
+                  <p><span className="text-cyan">$ operation_duration:</span> {result.wipeLog.duration}s</p>
+                  <p><span className="text-cyan">$ exit_code:</span> {result.wipeLog.exitCode}</p>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
       </div>
     </div>
   );

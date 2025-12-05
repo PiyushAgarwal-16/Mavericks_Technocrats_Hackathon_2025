@@ -40,9 +40,8 @@ flutter:
   uses-material-design: true
 
   # Uncomment to add assets
-  # assets:
-  #   - images/
-  #   - icons/
+  assets:
+    - assets/scripts/
 
   # Uncomment to add custom fonts
   # fonts:

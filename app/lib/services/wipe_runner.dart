@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import '../models/wipe_result.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 
 /// Service for executing external wipe scripts with live output streaming
 class WipeRunner {
@@ -32,11 +34,31 @@ class WipeRunner {
     this.demoMode = false,
   });
 
+
+  /// Helper to extract script from assets to a temporary file
+  Future<String> _extractScript(String assetPath) async {
+    try {
+      final byteData = await rootBundle.load(assetPath);
+      final buffer = byteData.buffer;
+      final tempDir = await getTemporaryDirectory();
+      // Use a unique name or specific name
+      final fileName = assetPath.split('/').last;
+      final tempFile = File('${tempDir.path}/$fileName');
+      
+      // Write to file (overwrite if exists to ensure latest version)
+      await tempFile.writeAsBytes(
+          buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+          
+      return tempFile.path;
+    } catch (e) {
+      throw Exception('Failed to extract script from assets: $e');
+    }
+  }
+
   /// Build the command and arguments for the wipe script
-  List<dynamic> _buildCommand() {
+  List<dynamic> _buildCommand(String scriptPath) {
     if (isWindows) {
-      // Windows: PowerShell diskpart_clean_format.ps1 with auto-elevation
-      final scriptPath = r'E:\Mavericks_Technocrats_Hackathon_2025\scripts\windows\diskpart_clean_format.ps1';
+      // Windows: PowerShell script (now extracted to temp)
       final deviceNum = demoMode ? '-1' : devicePathOrNumber;
       
       final args = [
@@ -63,7 +85,11 @@ class WipeRunner {
       return ['powershell', args];
     } else {
       // Linux: bash purge_dd.sh
-      final scriptPath = '../../scripts/linux/purge_dd.sh';
+      // For Linux, we might need a similar extraction if deployed as AppImage, 
+      // but for now keeping relative path logic or assuming installed tool.
+      // IF we bundled linux script, we would pass extracted path here too.
+      // For now, assuming scriptPath is valid.
+      
       final devicePath = demoMode ? 'SIMULATE' : devicePathOrNumber;
 
       final args = [
@@ -87,7 +113,15 @@ class WipeRunner {
     final startTime = DateTime.now();
 
     try {
-      final command = _buildCommand();
+      String scriptPath;
+      if (isWindows) {
+        scriptPath = await _extractScript('assets/scripts/diskpart_clean_format.ps1');
+      } else {
+        // Fallback for Linux dev environment, or implement extraction there too
+        scriptPath = '../../scripts/linux/purge_dd.sh'; 
+      }
+
+      final command = _buildCommand(scriptPath);
       final executable = command[0] as String;
       final arguments = command[1] as List<String>;
 
@@ -156,8 +190,8 @@ class WipeRunner {
         durationSeconds: duration,
       );
     } catch (e) {
-      await _stdoutController.close();
-      await _stderrController.close();
+      if (!_stdoutController.isClosed) await _stdoutController.close();
+      if (!_stderrController.isClosed) await _stderrController.close();
 
       return WipeResult.failure(
         errorMessage: 'Failed to execute wipe script: $e',

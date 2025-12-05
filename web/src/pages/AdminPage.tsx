@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, Certificate } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { Shield, Home, LogOut, CheckCircle, Search, Hash, BarChart3, Database, UploadCloud } from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
   const { user, logout } = useAuth();
@@ -49,71 +50,88 @@ export const AdminPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-purple-600 text-white shadow-lg">
-        <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-dark text-white font-sans relative overflow-x-hidden">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+
+      {/* Navbar */}
+      <nav className="border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-50">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">Admin Panel</h1>
-              <p className="text-purple-100 mt-1">
-                Logged in as {user?.email}
-              </p>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 w-10 h-10 rounded-xl flex items-center justify-center border border-primary/30">
+                <Shield className="text-primary w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-heading font-bold text-white tracking-wide">Admin Console</h1>
+                <p className="text-xs text-gray-400">
+                  System Administrator: <span className="text-primary">{user?.email}</span>
+                </p>
+              </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Link
                 to="/dashboard"
-                className="bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition"
+                className="hidden md:flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-lg font-medium transition border border-white/10"
               >
-                My Dashboard
+                <BarChart3 size={16} /> Dashboard
               </Link>
               <Link
                 to="/"
-                className="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-lg font-medium transition"
+                className="hidden md:flex items-center gap-2 text-gray-400 hover:text-white px-4 py-2 rounded-lg font-medium transition"
               >
-                Home
+                <Home size={16} /> Home
               </Link>
               <button
                 onClick={logout}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 px-4 py-2 rounded-lg font-medium transition border border-red-500/20"
               >
-                Logout
+                <LogOut size={16} />
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Statistics Cards */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-gray-600 text-sm font-semibold mb-1">
-              Total Certificates
+      {/* Content */}
+      <div className="container mx-auto px-4 py-12 relative z-10">
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="glass-panel p-6 rounded-2xl relative overflow-hidden">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Database className="text-primary w-6 h-6" />
+              </div>
+              <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded">GLOBAL</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900">
-              {stats.total}
-            </div>
+            <h3 className="text-3xl font-heading font-bold text-white mb-1">{stats.total}</h3>
+            <p className="text-sm text-gray-400">Total Certificates</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-gray-600 text-sm font-semibold mb-1">
-              Uploaded
+          <div className="glass-panel p-6 rounded-2xl relative overflow-hidden">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-green-500/10 rounded-xl">
+                <UploadCloud className="text-green-400 w-6 h-6" />
+              </div>
+              <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded">SYNC</span>
             </div>
-            <div className="text-3xl font-bold text-green-600">
-              {stats.uploaded}
-            </div>
+            <h3 className="text-3xl font-heading font-bold text-white mb-1">{stats.uploaded}</h3>
+            <p className="text-sm text-gray-400">Cloud Synced</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-gray-600 text-sm font-semibold mb-2">
-              By Method
+          <div className="glass-panel p-6 rounded-2xl relative overflow-hidden">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 bg-cyan/10 rounded-xl">
+                <Hash className="text-cyan w-6 h-6" />
+              </div>
+              <span className="text-xs font-mono text-gray-500 bg-white/5 px-2 py-1 rounded">METHODS</span>
             </div>
             <div className="space-y-1">
               {Object.entries(stats.byMethod).map(([method, count]) => (
-                <div key={method} className="flex justify-between text-sm">
-                  <span className="text-gray-700 uppercase">{method}:</span>
-                  <span className="font-semibold">{count}</span>
+                <div key={method} className="flex justify-between text-xs text-gray-300 border-b border-white/5 pb-1 last:border-0 last:pb-0">
+                  <span className="uppercase">{method}</span>
+                  <span className="font-mono text-cyan">{count}</span>
                 </div>
               ))}
             </div>
@@ -121,22 +139,26 @@ export const AdminPage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              All Certificates
-            </h2>
+        <div className="glass-panel rounded-2xl overflow-hidden border border-white/5">
+          <div className="p-6 border-b border-white/5 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-heading font-bold text-white">Certificate Registry</h2>
+              <p className="text-sm text-gray-400">Manage all system records.</p>
+            </div>
             <div className="flex gap-3">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search certificates..."
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 text-gray-500 w-4 h-4" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search registry..."
+                  className="bg-white/5 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none w-64 placeholder:text-gray-600"
+                />
+              </div>
               <button
                 onClick={loadAllCertificates}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition"
+                className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium text-sm transition shadow-[0_0_15px_rgba(123,44,191,0.3)] hover:shadow-[0_0_20px_rgba(123,44,191,0.5)]"
               >
                 Refresh
               </button>
@@ -145,111 +167,81 @@ export const AdminPage: React.FC = () => {
 
           {/* Loading */}
           {loading && (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent"></div>
-              <p className="text-gray-600 mt-4">Loading certificates...</p>
+            <div className="text-center py-20">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
+              <p className="text-primary mt-4 text-sm font-mono animate-pulse">ACCESSING_DATABASE...</p>
             </div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
-              <p className="text-red-700">{error}</p>
+            <div className="p-6">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 flex items-center gap-3">
+                <Shield className="w-5 h-5 flex-shrink-0" />
+                {error}
+              </div>
             </div>
           )}
 
-          {/* Certificates Table */}
-          {!loading && !error && filteredCertificates.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-600 text-lg">
-                {searchTerm ? 'No certificates match your search' : 'No certificates found'}
-              </p>
-            </div>
-          )}
-
+          {/* Table */}
           {!loading && !error && filteredCertificates.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b-2 border-gray-200">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 border-b border-white/10">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Wipe ID
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Device Model
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Serial Number
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Method
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Actions
-                    </th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Wipe ID</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Device Info</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Method</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-white/5">
                   {filteredCertificates.map((cert) => (
-                    <tr key={cert._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded block max-w-xs truncate">
+                    <tr key={cert._id} className="hover:bg-white/5 transition-colors group">
+                      <td className="px-6 py-4">
+                        <code className="text-xs font-mono text-cyan bg-cyan/10 px-2 py-1 rounded border border-cyan/20 block max-w-[120px] truncate" title={cert.wipeId}>
                           {cert.wipeId}
                         </code>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {cert.deviceModel}
+                      <td className="px-6 py-4 text-sm text-gray-300">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-white">{cert.deviceModel}</span>
+                          <span className="text-xs text-gray-500 font-mono">{cert.serialNumber || 'N/A'}</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {cert.serialNumber || '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium uppercase">
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium border border-white/10 uppercase bg-white/5 text-gray-300">
                           {cert.method}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
+                      <td className="px-6 py-4 text-sm text-gray-400 font-mono">
                         {new Date(cert.timestamp).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         {cert.uploaded ? (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
-                            UPLOADED
+                          <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-[10px] font-medium border border-green-500/20">
+                            <CheckCircle size={10} /> UPLOADED
                           </span>
                         ) : (
-                          <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
+                          <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-yellow-400 px-2 py-0.5 rounded text-[10px] font-medium border border-yellow-500/20">
                             PENDING
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <Link
                           to={`/verify?wipeId=${cert.wipeId}`}
-                          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                          className="inline-flex items-center gap-1 text-primary hover:text-white transition-colors text-sm font-medium"
                         >
-                          Verify →
+                          <Search size={14} /> Verify
                         </Link>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-
-          {/* Summary */}
-          {!loading && !error && filteredCertificates.length > 0 && (
-            <div className="mt-6 pt-6 border-t">
-              <p className="text-sm text-gray-600">
-                Showing <span className="font-semibold">{filteredCertificates.length}</span> of{' '}
-                <span className="font-semibold">{certificates.length}</span> certificates
-              </p>
             </div>
           )}
         </div>
