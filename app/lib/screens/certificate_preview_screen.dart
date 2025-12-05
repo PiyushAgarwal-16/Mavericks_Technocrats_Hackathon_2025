@@ -52,7 +52,7 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
   void initState() {
     super.initState();
     _certificateGenerator = CertificateGenerator(
-      backendUrl: widget.backendUrl ?? 'http://localhost:5000',
+      backendUrl: widget.backendUrl ?? 'https://maverickstechnocratshackathon2025-production.up.railway.app',
       authToken: widget.authToken,
     );
     

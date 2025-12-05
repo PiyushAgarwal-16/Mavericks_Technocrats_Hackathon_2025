@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Configure backend URL - can be overridden via environment variable
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
@@ -34,7 +34,7 @@ apiClient.interceptors.response.use(
       // Clear invalid token
       localStorage.removeItem('jwt_token');
       localStorage.removeItem('user');
-      
+
       // Redirect to login if not already there
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
