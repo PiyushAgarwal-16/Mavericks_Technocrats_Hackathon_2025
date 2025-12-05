@@ -25,26 +25,40 @@ function canonicalizeJSON(obj: any): string {
 }
 
 /**
- * Load RSA private key from file system.
+ * Load RSA private key from environment variable or file system.
  */
 function loadPrivateKey(): string {
+  // First, try to load from environment variable (for Railway/cloud deployment)
+  const privateKeyEnv = process.env.CERT_PRIVATE_KEY;
+  if (privateKeyEnv) {
+    return privateKeyEnv.replace(/\\n/g, '\n'); // Handle escaped newlines
+  }
+
+  // Fallback to file system (for local development)
   const keyPath = process.env.CERT_PRIVATE_KEY_PATH || path.join(__dirname, '../../keys/private.pem');
   
   if (!fs.existsSync(keyPath)) {
-    throw new Error(`Private key not found at: ${keyPath}`);
+    throw new Error(`Private key not found. Set CERT_PRIVATE_KEY environment variable or provide file at: ${keyPath}`);
   }
 
   return fs.readFileSync(keyPath, 'utf8');
 }
 
 /**
- * Load RSA public key from file system.
+ * Load RSA public key from environment variable or file system.
  */
 function loadPublicKey(): string {
+  // First, try to load from environment variable (for Railway/cloud deployment)
+  const publicKeyEnv = process.env.CERT_PUBLIC_KEY;
+  if (publicKeyEnv) {
+    return publicKeyEnv.replace(/\\n/g, '\n'); // Handle escaped newlines
+  }
+
+  // Fallback to file system (for local development)
   const keyPath = process.env.CERT_PUBLIC_KEY_PATH || path.join(__dirname, '../../keys/public.pem');
   
   if (!fs.existsSync(keyPath)) {
-    throw new Error(`Public key not found at: ${keyPath}`);
+    throw new Error(`Public key not found. Set CERT_PUBLIC_KEY environment variable or provide file at: ${keyPath}`);
   }
 
   return fs.readFileSync(keyPath, 'utf8');

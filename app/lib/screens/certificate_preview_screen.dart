@@ -169,7 +169,9 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -314,13 +316,82 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                 ],
               ),
               
-             if (_errorMessage != null)
+             if (_errorMessage != null && !_generationSuccess)
                Padding(
                  padding: const EdgeInsets.only(top: 16),
-                 child: Text('Error: $_errorMessage', style: TextStyle(color: AppColors.error), textAlign: TextAlign.center),
+                 child: Container(
+                   padding: const EdgeInsets.all(16),
+                   decoration: BoxDecoration(
+                     color: AppColors.error.withOpacity(0.1),
+                     border: Border.all(color: AppColors.error),
+                     borderRadius: BorderRadius.circular(8),
+                   ),
+                   child: Row(
+                     children: [
+                       Icon(Icons.error_outline, color: AppColors.error),
+                       const SizedBox(width: 12),
+                       Expanded(
+                         child: Text(_errorMessage!, style: TextStyle(color: AppColors.error)),
+                       ),
+                     ],
+                   ),
+                 ),
+               ),
+               
+             if (_errorMessage != null && _generationSuccess)
+               Padding(
+                 padding: const EdgeInsets.only(top: 16),
+                 child: Container(
+                   padding: const EdgeInsets.all(16),
+                   decoration: BoxDecoration(
+                     color: Colors.orange.withOpacity(0.1),
+                     border: Border.all(color: Colors.orange),
+                     borderRadius: BorderRadius.circular(8),
+                   ),
+                   child: Row(
+                     children: [
+                       Icon(Icons.cloud_off, color: Colors.orange),
+                       const SizedBox(width: 12),
+                       Expanded(
+                         child: Text(_errorMessage!, style: TextStyle(color: Colors.orange)),
+                       ),
+                     ],
+                   ),
+                 ),
                ),
           ],
         ),
+      ),
+          
+          // Loading Overlay
+          if (_isGenerating)
+            Container(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.cyan),
+                    const SizedBox(height: 24),
+                    Text(
+                      'GENERATING CERTIFICATE',
+                      style: TextStyle(
+                        color: AppColors.cyan,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please wait...',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

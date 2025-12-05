@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../models/wipe_result.dart';
 import '../models/storage_device.dart';
 import 'offline_certificate_queue.dart';
+import 'network_test.dart';
 
 /// Service for generating and uploading wipe certificates
 class CertificateGenerator {
@@ -196,8 +197,21 @@ class CertificateGenerator {
   }) async {
     const maxRetries = 3;
     
+    print('═══════════════════════════════════════════════════════');
+    print('🌐 CERTIFICATE UPLOAD STARTING');
+    print('═══════════════════════════════════════════════════════');
+    print('🎯 Backend URL: $backendUrl');
+    print('📝 Auth token present: ${authToken != null}');
+    
+    // Run network diagnostics
+    print('\n🔍 Running network diagnostics...');
+    await NetworkTest.runDiagnostics(backendUrl);
+    print('');
+    
     for (int attempt = 0; attempt < maxRetries; attempt++) {
       try {
+        print('🔄 Upload attempt ${attempt + 1}/$maxRetries');
+        
         // Create certificate payload
         final payload = createCertificatePayload(
           wipeResult: wipeResult,
@@ -206,10 +220,16 @@ class CertificateGenerator {
           userId: userId,
           wipeId: wipeId,
         );
+        
+        print('📦 Payload created for wipeId: ${payload['wipeId']}');
 
+        final url = '$backendUrl/certificates';
+        print('🎯 Target URL: $url');
+        
         // Make API request
+        print('📤 Sending POST request...');
         final response = await http.post(
-          Uri.parse('$backendUrl/certificates'),
+          Uri.parse(url),
           headers: {
             'Content-Type': 'application/json',
             'x-api-key': 'ZEROTRACE_AGENT_KEY_2025',
@@ -220,7 +240,11 @@ class CertificateGenerator {
           Duration(seconds: 15 + (attempt * 5)), // Increase timeout on retries
         );
 
+        print('📬 Response received: ${response.statusCode}');
+        print('📄 Response body: ${response.body}');
+
         if (response.statusCode == 201) {
+          print('✅ Upload successful!');
           final data = jsonDecode(response.body) as Map<String, dynamic>;
           
           return CertificateUploadResult(
@@ -232,10 +256,12 @@ class CertificateGenerator {
           );
         } else if (response.statusCode >= 500 && attempt < maxRetries - 1) {
           // Server error - retry
+          print('⚠️ Server error (${response.statusCode}), retrying...');
           await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
           continue;
         } else {
           // Client error or final retry - return error
+          print('❌ Upload failed: ${response.statusCode}');
           final error = response.statusCode == 400 || response.statusCode == 401
               ? jsonDecode(response.body)['error']
               : 'Server error: ${response.statusCode}';
@@ -247,6 +273,7 @@ class CertificateGenerator {
         }
       } catch (e) {
         // Network error or timeout
+        print('💥 Exception during upload: $e');
         if (attempt < maxRetries - 1) {
           // Wait before retrying (exponential backoff: 2s, 4s, 8s)
           await Future.delayed(Duration(seconds: 2 * (attempt + 1)));
@@ -324,10 +351,21 @@ class CertificateGenerator {
       // otherwise use our local ID.
       final finalWipeId = uploadResult.wipeId ?? wipeId;
       
-      final pendingCount = OfflineCertificateQueue().pendingCount;
-      final offlineMessage = pendingCount > 0
-          ? 'PDF Certificate saved locally. $pendingCount wipe record(s) pending upload. Will automatically sync when internet connection is restored.'
-          : 'PDF Certificate saved locally. Wipe record will be uploaded when internet connection is restored.';
+      // Determine what message to show
+      String? displayMessage;
+      if (uploadResult.success) {
+        // Upload succeeded - no error message needed
+        displayMessage = null;
+      } else if (isOfflineSuccess) {
+        // PDF created but upload failed - show offline info
+        final pendingCount = OfflineCertificateQueue().pendingCount;
+        displayMessage = pendingCount > 0
+            ? 'PDF Certificate saved locally. $pendingCount wipe record(s) pending upload. Will automatically sync when internet connection is restored.'
+            : 'PDF Certificate saved locally. Wipe record will be uploaded when internet connection is restored.';
+      } else {
+        // Total failure
+        displayMessage = uploadResult.errorMessage ?? 'Certificate generation failed';
+      }
       
       return CertificateGenerationResult(
         success: uploadResult.success || isOfflineSuccess,
@@ -335,9 +373,7 @@ class CertificateGenerator {
         wipeId: finalWipeId,
         verificationUrl: uploadResult.verificationUrl,
         signature: uploadResult.signature,
-        errorMessage: uploadResult.success 
-            ? null 
-            : offlineMessage,
+        errorMessage: displayMessage,
       );
     } catch (e) {
       return CertificateGenerationResult(
