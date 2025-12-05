@@ -208,6 +208,7 @@ class CertificateGenerator {
         Uri.parse('$backendUrl/certificates'),
         headers: {
           'Content-Type': 'application/json',
+          'x-api-key': 'ZEROTRACE_AGENT_KEY_2025',
           if (authToken != null) 'Authorization': 'Bearer $authToken',
         },
         body: jsonEncode(payload),
