@@ -8,7 +8,8 @@ import { Response } from 'express';
 import Certificate from '../models/Certificate';
 import WipeLog from '../models/WipeLog';
 import { AuthRequest } from '../middleware/auth';
-import { signData, verifySignature, generateHash, generateWipeId } from '../utils/crypto';
+import { generateHash, generateWipeId } from '../utils/crypto';
+import { signCertificatePayload, verifyCertificateSignature, computeSHA256 } from '../utils/signing';
 
 /**
  * POST /certificates
@@ -26,7 +27,11 @@ export const createCertificate = async (req: AuthRequest, res: Response): Promis
     // Generate unique wipe ID
     const wipeId = generateWipeId();
 
-    // Prepare certificate payload for signing
+    // Generate log hash
+    const logContent = rawLog || '';
+    const logHash = generateHash(logContent);
+
+    // Prepare certificate payload for signing (includes all required fields)
     const certPayload = {
       wipeId,
       userId: req.user.id,
@@ -34,15 +39,11 @@ export const createCertificate = async (req: AuthRequest, res: Response): Promis
       serialNumber: serialNumber || null,
       method,
       timestamp: timestamp || new Date().toISOString(),
+      logHash,
     };
 
-    // Generate log hash
-    const logContent = rawLog || '';
-    const logHash = generateHash(logContent);
-
-    // Sign the certificate payload
-    const dataToSign = JSON.stringify({ ...certPayload, logHash });
-    const signature = signData(dataToSign);
+    // Sign the certificate payload (will be canonicalized automatically)
+    const signature = signCertificatePayload(certPayload);
 
     // Create certificate
     const certificate = new Certificate({
@@ -98,36 +99,51 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
     if (!certificate) {
       res.status(404).json({ 
         verified: false,
+        signatureValid: false,
+        logHashMatches: false,
         error: 'Certificate not found' 
       });
       return;
     }
 
-    // Reconstruct payload for verification
+    // Reconstruct payload for verification (must match signing payload exactly)
     const certPayload = {
       wipeId: certificate.wipeId,
-      userId: certificate.userId,
+      userId: certificate.userId._id?.toString() || certificate.userId,
       deviceModel: certificate.deviceModel,
       serialNumber: certificate.serialNumber || null,
       method: certificate.method,
       timestamp: certificate.timestamp.toISOString(),
+      logHash: certificate.logHash,
     };
 
-    const dataToVerify = JSON.stringify({ ...certPayload, logHash: certificate.logHash });
-    
-    // Verify signature
-    const isValid = verifySignature(dataToVerify, certificate.signature);
+    // Verify signature using canonicalized payload
+    const signatureValid = verifyCertificateSignature(certPayload, certificate.signature);
 
-    // Get associated wipe log if exists
+    // Get associated wipe log and verify log hash
     let wipeLog = null;
+    let logHashMatches = false;
+
     if (certificate.uploaded) {
       wipeLog = await WipeLog.findOne({ wipeId });
+      if (wipeLog) {
+        // Recompute SHA256 of raw log and compare with stored logHash
+        const recomputedHash = computeSHA256(wipeLog.rawLog);
+        logHashMatches = recomputedHash === certificate.logHash;
+      }
+    } else {
+      // If no log uploaded, consider hash valid (empty log scenario)
+      logHashMatches = true;
     }
 
     res.json({
-      verified: isValid,
+      verified: signatureValid && logHashMatches,
+      signatureValid,
+      logHashMatches,
       certificate: {
+        _id: certificate._id,
         wipeId: certificate.wipeId,
+        userId: certificate.userId,
         deviceModel: certificate.deviceModel,
         serialNumber: certificate.serialNumber,
         method: certificate.method,
@@ -138,10 +154,13 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
         createdAt: certificate.createdAt,
       },
       wipeLog: wipeLog ? {
+        wipeId: wipeLog.wipeId,
         devicePath: wipeLog.devicePath,
         duration: wipeLog.duration,
         exitCode: wipeLog.exitCode,
+        rawLog: wipeLog.rawLog.substring(0, 500) + (wipeLog.rawLog.length > 500 ? '...' : ''),
       } : null,
+      user: certificate.userId,
     });
   } catch (error: any) {
     console.error('Get certificate error:', error);

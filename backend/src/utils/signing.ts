@@ -1,0 +1,109 @@
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+/**
+ * Canonicalize JSON object by sorting keys alphabetically.
+ * This ensures the same payload always produces the same signature.
+ */
+function canonicalizeJSON(obj: any): string {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(item => canonicalizeJSON(item)).join(',') + ']';
+  }
+
+  const sortedKeys = Object.keys(obj).sort();
+  const pairs = sortedKeys.map(key => {
+    const value = canonicalizeJSON(obj[key]);
+    return `"${key}":${value}`;
+  });
+
+  return '{' + pairs.join(',') + '}';
+}
+
+/**
+ * Load RSA private key from file system.
+ */
+function loadPrivateKey(): string {
+  const keyPath = process.env.CERT_PRIVATE_KEY_PATH || path.join(__dirname, '../../keys/private.pem');
+  
+  if (!fs.existsSync(keyPath)) {
+    throw new Error(`Private key not found at: ${keyPath}`);
+  }
+
+  return fs.readFileSync(keyPath, 'utf8');
+}
+
+/**
+ * Load RSA public key from file system.
+ */
+function loadPublicKey(): string {
+  const keyPath = process.env.CERT_PUBLIC_KEY_PATH || path.join(__dirname, '../../keys/public.pem');
+  
+  if (!fs.existsSync(keyPath)) {
+    throw new Error(`Public key not found at: ${keyPath}`);
+  }
+
+  return fs.readFileSync(keyPath, 'utf8');
+}
+
+/**
+ * Sign certificate payload using RSA-SHA256.
+ * Returns base64-encoded signature.
+ * 
+ * @param payload - Certificate payload object containing wipeId, userId, deviceModel, etc.
+ * @returns Base64-encoded signature
+ */
+export function signCertificatePayload(payload: object): string {
+  try {
+    const privateKey = loadPrivateKey();
+    const canonicalPayload = canonicalizeJSON(payload);
+    
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(canonicalPayload);
+    sign.end();
+    
+    const signature = sign.sign(privateKey, 'base64');
+    return signature;
+  } catch (error) {
+    console.error('Error signing certificate payload:', error);
+    throw new Error('Failed to sign certificate payload');
+  }
+}
+
+/**
+ * Verify certificate signature using RSA-SHA256.
+ * 
+ * @param payload - Certificate payload object (will be canonicalized before verification)
+ * @param signature - Base64-encoded signature to verify
+ * @returns True if signature is valid, false otherwise
+ */
+export function verifyCertificateSignature(payload: object, signature: string): boolean {
+  try {
+    const publicKey = loadPublicKey();
+    const canonicalPayload = canonicalizeJSON(payload);
+    
+    const verify = crypto.createVerify('RSA-SHA256');
+    verify.update(canonicalPayload);
+    verify.end();
+    
+    const isValid = verify.verify(publicKey, signature, 'base64');
+    return isValid;
+  } catch (error) {
+    console.error('Error verifying certificate signature:', error);
+    return false;
+  }
+}
+
+/**
+ * Compute SHA256 hash of a string.
+ * 
+ * @param data - String data to hash
+ * @returns Hex-encoded SHA256 hash
+ */
+export function computeSHA256(data: string): string {
+  return crypto.createHash('sha256').update(data).digest('hex');
+}

@@ -76,6 +76,8 @@ export interface WipeLog {
 
 export interface VerificationResult {
   verified: boolean;
+  signatureValid: boolean;
+  logHashMatches: boolean;
   certificate: Certificate;
   wipeLog?: WipeLog;
   user?: User;

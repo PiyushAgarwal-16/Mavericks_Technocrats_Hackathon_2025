@@ -153,14 +153,14 @@ export const VerifyPage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
                       <label className="text-sm font-semibold text-gray-600">Signature Valid</label>
-                      <p className={`font-semibold ${result.verified ? 'text-green-600' : 'text-red-600'}`}>
-                        {result.verified ? '✅ Yes' : '❌ No'}
+                      <p className={`font-semibold ${result.signatureValid ? 'text-green-600' : 'text-red-600'}`}>
+                        {result.signatureValid ? '✅ Yes' : '❌ No'}
                       </p>
                     </div>
                     <div>
                       <label className="text-sm font-semibold text-gray-600">Log Hash Matches</label>
-                      <p className={`font-semibold ${result.verified ? 'text-green-600' : 'text-red-600'}`}>
-                        {result.verified ? '✅ Yes' : '❌ No'}
+                      <p className={`font-semibold ${result.logHashMatches ? 'text-green-600' : 'text-red-600'}`}>
+                        {result.logHashMatches ? '✅ Yes' : '❌ No'}
                       </p>
                     </div>
                   </div>
