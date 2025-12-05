@@ -1,9 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/storage_device.dart';
 import '../models/wipe_result.dart';
 import '../services/wipe_runner.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/gradient_button.dart';
+import '../theme/app_colors.dart';
 import 'certificate_preview_screen.dart';
 
 /// Screen that shows live wipe progress with streaming output
@@ -32,7 +36,7 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
   
   bool _isRunning = true;
   WipeResult? _result;
-  String _status = 'Initializing...';
+  String _status = 'INITIALIZING PROTOCOLS...';
 
   @override
   void initState() {
@@ -41,8 +45,11 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
   }
 
   void _startWipe() async {
+    // Small delay for UI entrance
+    await Future.delayed(const Duration(milliseconds: 500));
+
     setState(() {
-      _status = 'Starting wipe process...';
+      _status = 'EXECUTING WIPE SEQUENCE...';
     });
 
     _runner = WipeRunner(
@@ -57,8 +64,8 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
     _runner.stdoutStream.listen(
       (line) {
         setState(() {
-          _outputLines.add('[OUT] $line');
-          _status = 'Running...';
+          _outputLines.add('[LOG] $line');
+          _status = 'WIPING SECTORS...';
         });
         _scrollToBottom();
       },
@@ -74,13 +81,13 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
     _runner.stderrStream.listen(
       (line) {
         setState(() {
-          _outputLines.add('[ERR] $line');
+          _outputLines.add('[SYS] $line');
         });
         _scrollToBottom();
       },
       onError: (error) {
         setState(() {
-          _outputLines.add('[ERROR] $error');
+          _outputLines.add('[FATAL] $error');
         });
         _scrollToBottom();
       },
@@ -92,7 +99,7 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
       setState(() {
         _result = result;
         _isRunning = false;
-        _status = result.success ? 'Completed Successfully' : 'Failed';
+        _status = result.success ? 'SEQUENCE COMPLETE' : 'SEQUENCE FAILED';
       });
     } catch (e) {
       setState(() {
@@ -101,7 +108,7 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
           exitCode: -1,
         );
         _isRunning = false;
-        _status = 'Error';
+        _status = 'CRITICAL ERROR';
       });
     }
   }
@@ -111,7 +118,7 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 100),
           curve: Curves.easeOut,
         );
       }
@@ -152,208 +159,198 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
       },
       child: AppScaffold(
         appBar: AppBar(
-          title: const Text('Wipe Progress'),
+          title: Text('Operation Progress', style: Theme.of(context).textTheme.displayMedium),
           automaticallyImplyLeading: !_isRunning,
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: Column(
-          children: [
-            // Status header
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: _getStatusColor(),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      if (_isRunning)
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Status Panel
+              GlassCard(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        if (_isRunning)
+                          const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.cyan,
+                            ),
+                          )
+                        else
+                          Icon(
+                            _result?.success == true ? Icons.check_circle : Icons.error,
+                            color: _result?.success == true ? AppColors.success : AppColors.error,
+                            size: 28,
                           ),
-                        )
-                      else
-                        Icon(
-                          _result?.success == true
-                              ? Icons.check_circle
-                              : Icons.error,
-                          color: Colors.white,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _status,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      color: _statusColor,
+                                      letterSpacing: 1.2,
+                                    ),
+                              ),
+                              Text(
+                                'TARGET: ${widget.device.name} (${widget.device.deviceId})',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
                         ),
-                      const SizedBox(width: 12),
+                      ],
+                    ),
+                    
+                    if (_result != null && !_isRunning) ...[
+                      const SizedBox(height: 16),
+                      Divider(color: AppColors.glassBorder),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('EXIT CODE: ${_result!.exitCode}', style: const TextStyle(fontFamily: 'monospace', color: AppColors.textSecondary)),
+                          if (_result?.durationSeconds != null)
+                             Text(
+                              'DURATION: ${_result!.durationSeconds!.toStringAsFixed(1)}s',
+                               style: const TextStyle(fontFamily: 'monospace', color: AppColors.cyan)
+                             ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Terminal Output
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.glassBorder),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.terminal, size: 16, color: AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Text('SYSTEM LOG', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Divider(color: AppColors.glassBorder, height: 1),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _status,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                        child: _outputLines.isEmpty
+                            ? Center(
+                                child: Text('WAITING FOR STREAM...', style: TextStyle(color: AppColors.textSecondary.withOpacity(0.5))),
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
+                                itemCount: _outputLines.length,
+                                itemBuilder: (context, index) {
+                                  final line = _outputLines[index];
+                                  final isError = line.contains('[ERR]') || line.contains('[FATAL]') || line.contains('[ERROR]');
+                                  
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: Text(
+                                      line,
+                                      style: TextStyle(
+                                        color: isError ? AppColors.error : AppColors.success,
+                                        fontFamily: 'monospace',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                            Text(
-                              '${widget.device.name} (${widget.device.deviceId})',
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   ),
-                  if (_result != null && !_isRunning) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Exit Code: ${_result!.exitCode}',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ),
-                        if (_result?.durationSeconds != null)
-                          Text(
-                            'Duration: ${_result!.durationSeconds!.toStringAsFixed(1)}s',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                      ],
-                    ),
-                  ],
-                ],
+                ), // Fade in
               ),
-            ),
 
-            // Output log
-            Expanded(
-              child: Container(
-                color: Colors.black,
-                child: _outputLines.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Waiting for output...',
-                          style: TextStyle(color: Colors.white54),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(8),
-                        itemCount: _outputLines.length,
-                        itemBuilder: (context, index) {
-                          final line = _outputLines[index];
-                          final isError = line.startsWith('[ERR]') ||
-                              line.startsWith('[ERROR]');
-                          
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text(
-                              line,
-                              style: TextStyle(
-                                color: isError ? Colors.red : Colors.green,
-                                fontFamily: 'monospace',
-                                fontSize: 12,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ),
-
-            // Result summary (shown when complete)
-            if (_result != null && !_isRunning) ...[
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  border: const Border(
-                    top: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Result Summary',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (_result!.logHash.isNotEmpty)
-                      Text('Log Hash: ${_result!.logHash.substring(0, 16)}...'),
-                    if (_result!.logFilePath != null)
-                      Text('Log File: ${_result!.logFilePath}'),
-                  ],
-                ),
-              ),
-            ],
-
-            // Action buttons
-            if (!_isRunning && _result != null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
+              // Actions
+              if (!_isRunning) ...[
+                const SizedBox(height: 16),
+                Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Back to Devices'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: const BorderSide(color: AppColors.textSecondary),
+                        ),
+                        child: Text('RETURN TO MENU', style: TextStyle(color: AppColors.textPrimary)),
                       ),
                     ),
-                    if (_result!.success) ...[
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _navigateToCertificate,
-                          child: const Text('Generate Certificate'),
-                        ),
-                      ),
+                    if (_result?.success == true) ...[
+                       const SizedBox(width: 16),
+                       Expanded(
+                         child: GradientButton(
+                           text: 'GENERATE CERTIFICATE',
+                           icon: Icons.workspace_premium,
+                           onPressed: _navigateToCertificate,
+                         ),
+                       ),
                     ],
                   ],
                 ),
-              ),
-          ],
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Color _getStatusColor() {
-    if (_isRunning) return Colors.blue;
-    if (_result?.success == true) return Colors.green;
-    return Colors.red;
+  Color get _statusColor {
+    if (_isRunning) return AppColors.cyan;
+    if (_result?.success == true) return AppColors.success;
+    return AppColors.error;
   }
 
   Future<bool?> _showCancelDialog() {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Wipe?'),
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: AppColors.error)),
+        title: const Text('ABORT SEQUENCE?', style: TextStyle(color: AppColors.error)),
         content: const Text(
-          'The wipe operation is still running. Are you sure you want to cancel?',
+          'Detailed wipe logs may be interrupted. Physical data state will be unknown.',
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Continue Wipe'),
+            child: const Text('CONTINUE', style: TextStyle(color: Colors.white)),
           ),
           ElevatedButton(
             onPressed: () {
               _runner.cancel();
               Navigator.pop(context, true);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Cancel Wipe'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('FORCE ABORT'),
           ),
         ],
       ),

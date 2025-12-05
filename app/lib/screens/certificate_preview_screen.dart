@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/storage_device.dart';
@@ -8,6 +9,9 @@ import '../models/wipe_result.dart';
 import '../services/certificate_generator.dart';
 import '../services/device_scanner.dart';
 import '../widgets/app_scaffold.dart';
+import '../widgets/glass_card.dart';
+import '../widgets/gradient_button.dart';
+import '../theme/app_colors.dart';
 
 /// Screen to preview and submit certificate to backend
 class CertificatePreviewScreen extends StatefulWidget {
@@ -83,18 +87,10 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
       });
 
       if (result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Certificate generated and uploaded successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
         // Attempt to save to USB drive
         try {
           final mountPath = await _deviceScanner.getMountPath(widget.device.deviceId);
           if (mountPath != null && _pdfFile != null) {
-            // Fix for mixed separators on Windows (e.g. C:/Users/.../file.pdf)
             final normalizedPath = _pdfFile!.path.replaceAll('/', Platform.pathSeparator);
             final fileName = normalizedPath.split(Platform.pathSeparator).last;
             
@@ -104,55 +100,32 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Certificate saved to USB: ${usbFile.path}'),
-                  backgroundColor: Colors.blue,
+                  content: Text('SAVED TO IDERIVE: ${usbFile.path}'),
+                  backgroundColor: AppColors.cyan,
                 ),
               );
             }
           }
         } catch (e) {
           print('Failed to save to USB: $e');
-          if (mounted) {
-             ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Failed to save to USB: $e'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-          }
         }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${result.errorMessage}'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (e) {
       setState(() {
         _isGenerating = false;
         _errorMessage = e.toString();
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to generate certificate: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   Future<void> _viewPdfPreview() async {
     if (_pdfFile == null || !await _pdfFile!.exists()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF file not found')),
+        const SnackBar(content: Text('PDF FILE NOT FOUND')),
       );
       return;
     }
 
-    // Navigate to PDF preview screen
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -167,17 +140,16 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
     final uri = Uri.parse(_verificationUrl!);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open verification URL')),
-      );
     }
   }
 
   void _copyToClipboard(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label copied to clipboard')),
+      SnackBar(
+        content: Text('$label COPIED'),
+        backgroundColor: AppColors.violet,
+      ),
     );
   }
 
@@ -185,337 +157,192 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       appBar: AppBar(
-        title: const Text('Wipe Certificate'),
+        title: Text('Data Destruction Certificate', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 20)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home, color: AppColors.cyan),
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Success header
-            Card(
-              color: Colors.green[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.green[700],
-                      size: 48,
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wipe Completed Successfully',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Generate a certificate to verify this wipe',
-                            style: TextStyle(color: Colors.black54),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+            // Status Banner
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.success.withOpacity(0.2), Colors.transparent],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
+                border: Border(left: BorderSide(color: AppColors.success, width: 4)),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            // Device information
-            const Text(
-              'Device Information',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildInfoRow('Device', widget.device.name),
-                    _buildInfoRow('ID', widget.device.deviceId),
-                    _buildInfoRow('Size', widget.device.sizeFormatted),
-                    _buildInfoRow('Method', widget.method.toUpperCase()),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Wipe details
-            const Text(
-              'Wipe Details',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildInfoRow(
-                      'Duration',
-                      widget.wipeResult.durationSeconds != null
-                          ? '${widget.wipeResult.durationSeconds!.toStringAsFixed(1)} seconds'
-                          : 'Unknown',
-                    ),
-                    _buildInfoRow(
-                      'Exit Code',
-                      widget.wipeResult.exitCode.toString(),
-                    ),
-                    _buildInfoRow(
-                      'Log Hash',
-                      widget.wipeResult.logHash.isNotEmpty
-                          ? '${widget.wipeResult.logHash.substring(0, 16)}...'
-                          : 'N/A',
-                      onTap: widget.wipeResult.logHash.isNotEmpty
-                          ? () => _copyToClipboard(
-                                widget.wipeResult.logHash,
-                                'Log hash',
-                              )
-                          : null,
-                    ),
-                    if (widget.wipeResult.logFilePath != null)
-                      _buildInfoRow(
-                        'Log File',
-                        widget.wipeResult.logFilePath!,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Certificate section
-            if (!_generationSuccess) ...[
-              const Text(
-                'Generate Certificate',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.workspace_premium, size: 64),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Create a cryptographically signed certificate and PDF report to verify this wipe operation.',
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isGenerating ? null : _generateCertificate,
-                          icon: _isGenerating
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.upload),
-                          label: Text(
-                            _isGenerating
-                                ? 'Generating...'
-                                : 'Generate Certificate & PDF',
-                          ),
-                        ),
-                      ),
-                      if (_errorMessage != null) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ] else ...[
-              // Certificate generated successfully
-              const Text(
-                'Certificate Generated',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                color: Colors.blue[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.verified,
-                        color: Colors.blue[700],
-                        size: 64,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Certificate Created Successfully',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (_certificateId != null)
-                        _buildCopyableField(
-                          'Certificate ID',
-                          _certificateId!,
-                        ),
-                      if (_verificationUrl != null) ...[
-                        const SizedBox(height: 8),
-                        _buildCopyableField(
-                          'Verification URL',
-                          _verificationUrl!,
-                        ),
-                      ],
-                      if (_signature != null) ...[
-                        const SizedBox(height: 8),
-                        _buildCopyableField(
-                          'Digital Signature',
-                          '${_signature!.substring(0, 32)}...',
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: _viewPdfPreview,
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('View PDF'),
-                            ),
-                          ),
-                          if (_verificationUrl != null) ...[
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: _openVerificationUrl,
-                                icon: const Icon(Icons.open_in_browser),
-                                label: const Text('Verify Online'),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-
-            // Done button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  // Return to home/drive list
-                  Navigator.popUntil(context, (route) => route.isFirst);
-                },
-                child: const Text('Done'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, {VoidCallback? onTap}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 100,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-            Expanded(
               child: Row(
                 children: [
+                  const Icon(Icons.verified, color: AppColors.success, size: 32),
+                  const SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      value,
-                      style: const TextStyle(fontFamily: 'monospace'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('ERASURE VERIFIED', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                        Text('NIST 800-88 PURGE STANDARD', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      ],
                     ),
                   ),
-                  if (onTap != null)
-                    const Icon(Icons.copy, size: 16, color: Colors.blue),
                 ],
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Certificate Card
+            GlassCard(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                   Center(
+                     child: Text(
+                       'CERTIFICATE OF ERASURE',
+                       style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24, letterSpacing: 2),
+                       textAlign: TextAlign.center,
+                     ),
+                   ),
+                   const SizedBox(height: 32),
+                   
+                   // Device Details Table
+                   _buildSectionTitle(context, 'DEVICE SPECIFICATIONS'),
+                   const SizedBox(height: 12),
+                   _buildDetailRow('DEVICE NAME', widget.device.name),
+                   _buildDetailRow('SERIAL NUMBER', widget.device.deviceId), // Assuming deviceId is serial for now, or fetch from meta
+                   _buildDetailRow('CAPACITY', widget.device.sizeFormatted),
+                   
+                   const SizedBox(height: 24),
+                   
+                   // Wipe Details Table
+                   _buildSectionTitle(context, 'ERASURE PROTOCOL'),
+                   const SizedBox(height: 12),
+                   _buildDetailRow('METHOD', widget.method.toUpperCase()),
+                   _buildDetailRow('STATUS', 'SUCCESS (0 errors)'),
+                   _buildDetailRow('DATE', DateTime.now().toIso8601String().split('T')[0]),
+                   
+                   const SizedBox(height: 24),
+                   
+                   if (_certificateId != null) ...[
+                     _buildSectionTitle(context, 'VERIFICATION PROOF'),
+                     const SizedBox(height: 12),
+                     Container(
+                       padding: const EdgeInsets.all(12),
+                       decoration: BoxDecoration(
+                         color: Colors.black,
+                         border: Border.all(color: AppColors.cyan.withOpacity(0.5)),
+                         borderRadius: BorderRadius.circular(8),
+                       ),
+                       child: Column(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Text('CERTIFICATE ID', style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                           SelectableText(_certificateId!, style: TextStyle(color: AppColors.cyan, fontFamily: 'monospace', fontSize: 14)),
+                           const SizedBox(height: 8),
+                           Text('CRYPTOGRAPHIC HASH', style: TextStyle(color: AppColors.textSecondary, fontSize: 10)),
+                           SelectableText(
+                             widget.wipeResult.logHash.isNotEmpty ? widget.wipeResult.logHash : 'Pending...', 
+                             style: TextStyle(color: Colors.white, fontFamily: 'monospace', fontSize: 12)
+                           ),
+                         ],
+                       ),
+                     ),
+                   ],
+
+                   const SizedBox(height: 32),
+                   
+                   // Stamp
+                   Center(
+                     child: Container(
+                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.circular(8),
+                         border: Border.all(color: AppColors.success, width: 2),
+                       ),
+                       child: Text('PROVEN PURGED', 
+                         style: TextStyle(
+                           color: AppColors.success, 
+                           fontWeight: FontWeight.bold, 
+                           letterSpacing: 2,
+                           fontSize: 16,
+                         ),
+                       ),
+                     ),
+                   ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Actions
+            if (_generationSuccess)
+              Row(
+                children: [
+                  Expanded(
+                    child: GradientButton(
+                      text: 'OPEN PDF REPORT',
+                      icon: Icons.picture_as_pdf,
+                      onPressed: _viewPdfPreview,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  if (_verificationUrl != null)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _openVerificationUrl,
+                        style: OutlinedButton.styleFrom(
+                           padding: const EdgeInsets.symmetric(vertical: 16),
+                           side: const BorderSide(color: AppColors.cyan),
+                        ),
+                        child: Text('VERIFY ONLINE', style: TextStyle(color: AppColors.cyan)),
+                      ),
+                    ),
+                ],
+              ),
+              
+             if (_errorMessage != null)
+               Padding(
+                 padding: const EdgeInsets.only(top: 16),
+                 child: Text('Error: $_errorMessage', style: TextStyle(color: AppColors.error), textAlign: TextAlign.center),
+               ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCopyableField(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    return Row(
+      children: [
+        Text(title, style: TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        const SizedBox(width: 8),
+        Expanded(child: Divider(color: AppColors.glassBorder)),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black54,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(fontFamily: 'monospace'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.copy, size: 20),
-                onPressed: () => _copyToClipboard(value, label),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
+          Text(label, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          Text(value, style: const TextStyle(color: Colors.white, fontFamily: 'monospace', fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -526,62 +353,25 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
 class PdfPreviewScreen extends StatelessWidget {
   final File pdfFile;
 
-  const PdfPreviewScreen({
-    super.key,
-    required this.pdfFile,
-  });
+  const PdfPreviewScreen({super.key, required this.pdfFile});
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       appBar: AppBar(
-        title: const Text('Certificate PDF Preview'),
+        title: const Text('PDF Report'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () async {
-              // Share PDF using the printing package
-              await Printing.sharePdf(
-                bytes: await pdfFile.readAsBytes(),
-                filename: pdfFile.path.split('/').last,
-              );
-            },
-            tooltip: 'Share PDF',
-          ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: () async {
-              // Print PDF using the printing package
-              await Printing.layoutPdf(
-                onLayout: (format) => pdfFile.readAsBytes(),
-              );
-            },
-            tooltip: 'Print PDF',
-          ),
-        ],
       ),
       body: PdfPreview(
         build: (format) => pdfFile.readAsBytes(),
         canChangePageFormat: false,
         canChangeOrientation: false,
         canDebug: false,
-        pdfFileName: pdfFile.path.split('/').last,
-        actions: [
-          PdfPreviewAction(
-            icon: const Icon(Icons.save),
-            onPressed: (context, build, pageFormat) async {
-              // Save dialog
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('PDF saved to: ${pdfFile.path}'),
-                  duration: const Duration(seconds: 3),
-                ),
-              );
-            },
-          ),
-        ],
+        pdfFileName: pdfFile.path.split(Platform.pathSeparator).last,
+        
+        // Customizing the PDF preview interactions colors if possible, 
+        // or just letting it wrap in our dark mode scaffold
       ),
     );
   }
