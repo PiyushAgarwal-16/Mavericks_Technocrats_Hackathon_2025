@@ -15,6 +15,60 @@ class DeviceScanner {
     }
   }
 
+  /// Get the mount path (e.g., "E:\" or "/media/usb") for a given device ID
+  Future<String?> getMountPath(String deviceId) async {
+    if (Platform.isWindows) {
+      return _getWindowsDriveLetter(deviceId);
+    } else if (Platform.isLinux) {
+      return _getLinuxMountPoint(deviceId);
+    }
+    return null;
+  }
+
+  Future<String?> _getWindowsDriveLetter(String deviceId) async {
+    try {
+      final result = await Process.run(
+        'powershell',
+        [
+          '-Command',
+          'Get-Partition -DiskNumber $deviceId | Where-Object { \$_.DriveLetter -ne 0 } | Select-Object -ExpandProperty DriveLetter'
+        ],
+      );
+
+      if (result.exitCode == 0) {
+        final content = result.stdout.toString().trim();
+        if (content.isNotEmpty) {
+          // Return as root path, e.g., "E:\"
+          return '$content:\\';
+        }
+      }
+    } catch (e) {
+      print('Error getting drive letter: $e');
+    }
+    return null;
+  }
+
+  Future<String?> _getLinuxMountPoint(String deviceId) async {
+    try {
+      // Use lsblk to find mountpoint for the device
+      // deviceId on Linux in this app is likely "/dev/sdX"
+      final result = await Process.run(
+        'lsblk',
+        ['-n', '-o', 'MOUNTPOINT', deviceId],
+      );
+
+      if (result.exitCode == 0) {
+        final content = result.stdout.toString().trim();
+        if (content.isNotEmpty) {
+          return content;
+        }
+      }
+    } catch (e) {
+      print('Error getting linux mount point: $e');
+    }
+    return null;
+  }
+
   /// Scan devices on Windows using Get-PhysicalDisk
   Future<List<StorageDevice>> _scanWindowsDevices() async {
     try {

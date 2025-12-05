@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/storage_device.dart';
+import '../widgets/app_scaffold.dart';
 import 'wipe_progress_screen.dart';
 
 /// Screen for configuring wipe options before execution
@@ -120,9 +121,11 @@ class _WipeOptionsScreenState extends State<WipeOptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Wipe Options'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

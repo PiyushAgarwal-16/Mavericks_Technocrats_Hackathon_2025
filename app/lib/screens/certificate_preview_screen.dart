@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/storage_device.dart';
 import '../models/wipe_result.dart';
 import '../services/certificate_generator.dart';
+import '../services/device_scanner.dart';
+import '../widgets/app_scaffold.dart';
 
 /// Screen to preview and submit certificate to backend
 class CertificatePreviewScreen extends StatefulWidget {
@@ -40,6 +42,7 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
   String? _signature;
   String? _errorMessage;
   late CertificateGenerator _certificateGenerator;
+  final _deviceScanner = DeviceScanner();
 
   @override
   void initState() {
@@ -48,6 +51,11 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
       backendUrl: widget.backendUrl ?? 'http://localhost:5000',
       authToken: widget.authToken,
     );
+    
+    // Auto-generate certificate after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _generateCertificate();
+    });
   }
 
   Future<void> _generateCertificate() async {
@@ -81,6 +89,38 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
             backgroundColor: Colors.green,
           ),
         );
+
+        // Attempt to save to USB drive
+        try {
+          final mountPath = await _deviceScanner.getMountPath(widget.device.deviceId);
+          if (mountPath != null && _pdfFile != null) {
+            // Fix for mixed separators on Windows (e.g. C:/Users/.../file.pdf)
+            final normalizedPath = _pdfFile!.path.replaceAll('/', Platform.pathSeparator);
+            final fileName = normalizedPath.split(Platform.pathSeparator).last;
+            
+            final usbFile = File('$mountPath$fileName');
+            await _pdfFile!.copy(usbFile.path);
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Certificate saved to USB: ${usbFile.path}'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          print('Failed to save to USB: $e');
+          if (mounted) {
+             ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to save to USB: $e'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+          }
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -143,9 +183,11 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Wipe Certificate'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -333,10 +375,11 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildCopyableField(
-                        'Certificate ID',
-                        _certificateId!,
-                      ),
+                      if (_certificateId != null)
+                        _buildCopyableField(
+                          'Certificate ID',
+                          _certificateId!,
+                        ),
                       if (_verificationUrl != null) ...[
                         const SizedBox(height: 8),
                         _buildCopyableField(
@@ -490,9 +533,11 @@ class PdfPreviewScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Certificate PDF Preview'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),

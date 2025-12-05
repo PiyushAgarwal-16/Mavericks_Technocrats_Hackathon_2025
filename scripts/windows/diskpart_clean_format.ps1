@@ -59,7 +59,9 @@ param(
     [switch]$AutoElevate,
     [switch]$SkipConfirmation,
     
-    [string]$LogDir = "./logs"
+    [string]$LogDir = "./logs",
+    
+    [string]$LogFile = ""
 )
 
 # ============================================================================
@@ -73,13 +75,22 @@ if ($AutoElevate -and $DeviceNumber -ne -1) {
     if (-not $isAdmin) {
         Write-Host "`n[AUTO-ELEVATE] Requesting administrator privileges..." -ForegroundColor Cyan
         
+        # Prepare log file path so parent can read it later
+        if ([string]::IsNullOrEmpty($LogFile)) {
+            if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
+            $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+            $LogFile = Join-Path $LogDir "diskwipe_format_disk${DeviceNumber}_${timestamp}.log"
+            $LogFile = [System.IO.Path]::GetFullPath($LogFile)
+        }
+
         # Build arguments to pass to elevated instance
         $argumentList = @(
             '-ExecutionPolicy', 'Bypass',
             '-File', "`"$PSCommandPath`"",
             '-DeviceNumber', $DeviceNumber,
             '-FileSystem', $FileSystem,
-            '-VolumeName', "`"$VolumeName`""
+            '-VolumeName', "`"$VolumeName`"",
+            '-LogFile', "`"$LogFile`""
         )
         
         if ($DryRun) { $argumentList += '-DryRun' }
@@ -96,6 +107,14 @@ if ($AutoElevate -and $DeviceNumber -ne -1) {
                 -Wait `
                 -PassThru
             
+            # CRITICAL: Read the log file and print to stdout so parent process (Flutter) can see it!
+            if (Test-Path $LogFile) {
+                $logContent = Get-Content $LogFile -Raw
+                Write-Host $logContent
+            } else {
+                Write-Host "Error: Log file not found at $LogFile" -ForegroundColor Red
+            }
+
             exit $process.ExitCode
         }
         catch {
@@ -177,10 +196,14 @@ function Initialize-Logging {
         New-Item -ItemType Directory -Path $LogDirectory -Force | Out-Null
     }
     
-    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-    $logFile = Join-Path $LogDirectory "diskwipe_format_disk${DeviceNumber}_${timestamp}.log"
+    # Use provided log file if set, otherwise generate new one
+    if (-not [string]::IsNullOrEmpty($LogFile)) {
+        return $LogFile
+    }
     
-    return $logFile
+    $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+    $newLogFile = Join-Path $LogDirectory "diskwipe_format_disk${DeviceNumber}_${timestamp}.log"
+    return [System.IO.Path]::GetFullPath($newLogFile)
 }
 
 function Write-Log {
@@ -336,7 +359,7 @@ exit
         
         if (Test-Path "$env:TEMP\diskpart_err.txt") {
             $errors = Get-Content "$env:TEMP\diskpart_err.txt" -Raw
-            if ($errors.Trim()) {
+            if ($errors -and $errors.Trim()) {
                 Write-Log "DiskPart Errors:`n$errors" -LogFile $LogFile -IsError
             }
         }
@@ -345,7 +368,7 @@ exit
         
         # Check for success in output - DiskPart can return 0 even on failure
         $success = $false
-        if ($output -match "DiskPart succeeded" -or $output -match "successfully") {
+        if ($output -and ($output -match "DiskPart succeeded" -or $output -match "successfully")) {
             if ($output -match "DiskPart succeeded in cleaning" -and 
                 $output -match "successfully formatted" -and 
                 $output -match "successfully assigned") {

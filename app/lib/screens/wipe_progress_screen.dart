@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/storage_device.dart';
 import '../models/wipe_result.dart';
 import '../services/wipe_runner.dart';
+import '../widgets/app_scaffold.dart';
 import 'certificate_preview_screen.dart';
 
 /// Screen that shows live wipe progress with streaming output
@@ -149,10 +150,12 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
         }
         return true;
       },
-      child: Scaffold(
+      child: AppScaffold(
         appBar: AppBar(
           title: const Text('Wipe Progress'),
           automaticallyImplyLeading: !_isRunning,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
         body: Column(
           children: [
@@ -215,7 +218,7 @@ class _WipeProgressScreenState extends State<WipeProgressScreen> {
                             style: const TextStyle(color: Colors.white70),
                           ),
                         ),
-                        if (_result!.durationSeconds != null)
+                        if (_result?.durationSeconds != null)
                           Text(
                             'Duration: ${_result!.durationSeconds!.toStringAsFixed(1)}s',
                             style: const TextStyle(color: Colors.white70),

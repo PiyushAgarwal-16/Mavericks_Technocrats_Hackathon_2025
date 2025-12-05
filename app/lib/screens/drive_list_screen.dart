@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/storage_device.dart';
 import '../services/device_scanner.dart';
+import '../widgets/app_scaffold.dart';
 import 'wipe_options_screen.dart';
 
 /// Screen to display and select storage devices for wiping
@@ -79,9 +80,11 @@ class _DriveListScreenState extends State<DriveListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(
         title: const Text('Select Drive to Wipe'),
+        backgroundColor: Colors.transparent, // Transparent for gradient
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
