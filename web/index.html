@@ -1,13 +1,410 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZeroTrace - Secure Device Wipe Certification</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZeroTrace – Military-Grade Data Erasure</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7B2CBF',
+                        cyan: '#00D1FF',
+                        dark: '#030014',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Space Grotesk', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<body class="antialiased selection:bg-cyan selection:text-dark">
+
+    <!-- Background Grid -->
+    <div class="fixed inset-0 bg-grid pointer-events-none z-0"></div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 py-6">
+        <div class="container mx-auto px-6">
+            <div class="glass-nav rounded-full px-6 py-3 flex justify-between items-center border border-white/10">
+                <a href="index.html" class="flex items-center gap-3 group">
+                    <div class="relative">
+                        <div
+                            class="absolute inset-0 bg-cyan blur-md opacity-50 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <i data-feather="shield" class="relative text-white w-6 h-6"></i>
+                    </div>
+                    <span class="text-xl font-heading font-bold tracking-wide text-white">ZeroTrace</span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="index.html"
+                        class="text-sm font-medium text-white hover:text-cyan transition-colors">Home</a>
+                    <a href="pages/download.html"
+                        class="text-sm font-medium text-gray-400 hover:text-white transition-colors">Download</a>
+                    <a href="pages/certificate.html"
+                        class="text-sm font-medium text-gray-400 hover:text-white transition-colors">Certificate</a>
+                    <a href="pages/compare.html"
+                        class="text-sm font-medium text-gray-400 hover:text-white transition-colors">Compare</a>
+                    <button
+                        class="erase-now-btn px-6 py-2 rounded-full btn-glow text-white font-bold text-sm tracking-wide">
+                        Erase Data
+                    </button>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-white hover:text-cyan">
+                    <i data-feather="menu"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu"
+            class="hidden md:hidden absolute top-24 left-4 right-4 glass-panel rounded-2xl p-6 flex flex-col gap-4 z-50">
+            <a href="index.html" class="block py-2 text-white hover:text-cyan">Home</a>
+            <a href="pages/download.html" class="block py-2 text-gray-400 hover:text-white">Download</a>
+            <a href="pages/certificate.html" class="block py-2 text-gray-400 hover:text-white">Certificate</a>
+            <a href="pages/compare.html" class="block py-2 text-gray-400 hover:text-white">Compare</a>
+            <button class="erase-now-btn w-full py-3 rounded-lg btn-glow text-white font-bold">Erase Data</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center pt-32 pb-20 overflow-hidden">
+        <div class="container mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-16 items-center">
+
+            <!-- Text Content -->
+            <div data-aos="fade-right">
+                <div
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan/30 bg-cyan/5 text-cyan text-xs font-bold tracking-widest mb-8">
+                    <span class="w-2 h-2 rounded-full bg-cyan animate-pulse"></span>
+                    NIST 800-88 COMPLIANT
+                </div>
+                <h1 class="text-5xl md:text-7xl font-heading font-bold leading-tight mb-6">
+                    Delete Data <br>
+                    <span class="text-gradient">Beyond Recovery</span>
+                </h1>
+                <p class="text-gray-400 text-lg mb-10 max-w-lg leading-relaxed">
+                    The only Android data erasure tool you'll ever need. Military-grade algorithms ensure your personal
+                    information is gone forever.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-5">
+                    <a href="pages/download.html"
+                        class="px-8 py-4 rounded-xl bg-white text-dark font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                        <i data-feather="download"></i> Download App
+                    </a>
+                    <a href="pages/certificate.html"
+                        class="px-8 py-4 rounded-xl glass-panel text-white font-bold hover:bg-white/5 transition-colors flex items-center justify-center gap-2">
+                        <i data-feather="file-text"></i> Verify Certificate
+                    </a>
+                </div>
+
+                <div class="mt-12 flex items-center gap-6 text-gray-500 text-sm">
+                    <div class="flex items-center gap-2">
+                        <i data-feather="check" class="text-cyan w-4 h-4"></i> No Root Required
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i data-feather="check" class="text-cyan w-4 h-4"></i> 100% Free
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visual Content -->
+            <div class="relative" data-aos="fade-left">
+                <!-- Main Card -->
+                <div class="glass-panel rounded-3xl p-8 relative animate-float z-20">
+                    <div class="flex items-center justify-between mb-8">
+                        <div class="flex gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                        </div>
+                        <div class="text-xs font-mono text-cyan/80">SECURE_ERASE_V2.0</div>
+                    </div>
+
+                    <!-- Progress Visualization -->
+                    <div class="space-y-6">
+                        <div class="relative pt-2">
+                            <div class="flex justify-between text-xs font-bold mb-2">
+                                <span class="text-white">OVERWRITING SECTORS</span>
+                                <span class="text-cyan">84%</span>
+                            </div>
+                            <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-primary to-cyan w-[84%] relative">
+                                    <div class="absolute inset-0 bg-white/30 animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <i data-feather="image" class="text-purple-400 mb-2"></i>
+                                <div class="text-2xl font-heading font-bold text-white">1,240</div>
+                                <div class="text-xs text-gray-500">Photos Wiped</div>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <i data-feather="file" class="text-pink-400 mb-2"></i>
+                                <div class="text-2xl font-heading font-bold text-white">856</div>
+                                <div class="text-xs text-gray-500">Files Shredded</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Elements -->
+                <div class="absolute -top-10 -right-10 glass-panel p-4 rounded-2xl z-10 animate-float"
+                    style="animation-delay: 1s;">
+                    <i data-feather="lock" class="text-cyan w-8 h-8"></i>
+                </div>
+                <div class="absolute -bottom-8 -left-8 glass-panel p-4 rounded-2xl z-30 animate-float"
+                    style="animation-delay: 2s;">
+                    <i data-feather="shield-off" class="text-primary w-8 h-8"></i>
+                </div>
+
+                <!-- Glow Effects -->
+                <div
+                    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/20 blur-[100px] -z-10 rounded-full">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid (Bento Style) -->
+    <section class="py-24 relative">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <h2 class="text-3xl md:text-5xl font-heading font-bold mb-6">Why Choose <span
+                        class="text-gradient">ZeroTrace</span>?</h2>
+                <p class="text-gray-400 max-w-2xl mx-auto text-lg">We don't just delete files; we destroy the digital
+                    footprint they leave behind.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Large Feature -->
+                <div class="md:col-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden group"
+                    data-aos="fade-up">
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-cyan/10 blur-[80px] rounded-full group-hover:bg-cyan/20 transition-colors">
+                    </div>
+                    <div class="relative z-10">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-primary to-cyan rounded-xl flex items-center justify-center mb-6">
+                            <i data-feather="layers" class="text-white"></i>
+                        </div>
+                        <h3 class="text-2xl font-heading font-bold mb-4">Multi-Pass Overwrite</h3>
+                        <p class="text-gray-400 leading-relaxed max-w-md">
+                            We utilize the DoD 5220.22-M and NIST 800-88 standards to overwrite your data multiple times
+                            with random patterns, zeros, and ones. This ensures that even the most advanced forensic
+                            recovery tools cannot retrieve your data.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tall Feature -->
+                <div class="md:row-span-2 glass-panel p-8 rounded-3xl relative overflow-hidden group" data-aos="fade-up"
+                    data-aos-delay="100">
+                    <div
+                        class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary/20 to-transparent opacity-50">
+                    </div>
+                    <div class="relative z-10 h-full flex flex-col">
+                        <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center mb-6">
+                            <i data-feather="award" class="text-cyan"></i>
+                        </div>
+                        <h3 class="text-2xl font-heading font-bold mb-4">Certified Proof</h3>
+                        <p class="text-gray-400 leading-relaxed mb-8 flex-grow">
+                            Generate a cryptographically signed PDF certificate after every wipe. Perfect for
+                            compliance, audits, or resale verification.
+                        </p>
+                        <img src="https://placehold.co/400x300/1e1e2e/FFF?text=Certificate+Preview" alt="Certificate"
+                            class="rounded-lg border border-white/10 shadow-lg transform group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                </div>
+
+                <!-- Small Feature 1 -->
+                <div class="glass-panel p-8 rounded-3xl hover:bg-white/5 transition-colors" data-aos="fade-up"
+                    data-aos-delay="200">
+                    <i data-feather="zap" class="text-yellow-400 w-10 h-10 mb-4"></i>
+                    <h3 class="text-xl font-heading font-bold mb-2">Lightning Fast</h3>
+                    <p class="text-gray-400 text-sm">Optimized I/O operations for maximum speed without compromising
+                        security.</p>
+                </div>
+
+                <!-- Small Feature 2 -->
+                <div class="glass-panel p-8 rounded-3xl hover:bg-white/5 transition-colors" data-aos="fade-up"
+                    data-aos-delay="300">
+                    <i data-feather="lock" class="text-pink-400 w-10 h-10 mb-4"></i>
+                    <h3 class="text-xl font-heading font-bold mb-2">Privacy First</h3>
+                    <p class="text-gray-400 text-sm">No data ever leaves your device. The entire process happens
+                        locally.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works (Steps) -->
+    <section class="py-24 relative overflow-hidden">
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/10 blur-[120px] rounded-full -z-10">
+        </div>
+
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-heading font-bold mb-6">Simple 3-Step Process</h2>
+            </div>
+
+            <div class="relative">
+                <!-- Connecting Line (Desktop) -->
+                <div
+                    class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-cyan/30 to-transparent -translate-y-1/2 z-0">
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-12 relative z-10">
+                    <!-- Step 1 -->
+                    <div class="text-center group" data-aos="fade-up">
+                        <div
+                            class="w-20 h-20 mx-auto bg-dark border border-cyan/50 rounded-2xl flex items-center justify-center mb-8 relative shadow-[0_0_30px_rgba(0,209,255,0.2)] group-hover:scale-110 transition-transform duration-300">
+                            <span class="text-3xl font-heading font-bold text-cyan">1</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Install App</h3>
+                        <p class="text-gray-400 text-sm px-8">Download ZeroTrace from our website or the Play Store.</p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="text-center group" data-aos="fade-up" data-aos-delay="100">
+                        <div
+                            class="w-20 h-20 mx-auto bg-dark border border-primary/50 rounded-2xl flex items-center justify-center mb-8 relative shadow-[0_0_30px_rgba(123,44,191,0.2)] group-hover:scale-110 transition-transform duration-300">
+                            <span class="text-3xl font-heading font-bold text-primary">2</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Select & Wipe</h3>
+                        <p class="text-gray-400 text-sm px-8">Choose what to delete—photos, contacts, or free space.</p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="text-center group" data-aos="fade-up" data-aos-delay="200">
+                        <div
+                            class="w-20 h-20 mx-auto bg-dark border border-pink-500/50 rounded-2xl flex items-center justify-center mb-8 relative shadow-[0_0_30px_rgba(255,0,128,0.2)] group-hover:scale-110 transition-transform duration-300">
+                            <span class="text-3xl font-heading font-bold text-pink-500">3</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Get Certified</h3>
+                        <p class="text-gray-400 text-sm px-8">Receive your tamper-proof certificate of destruction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24">
+        <div class="container mx-auto px-6">
+            <div class="glass-panel rounded-3xl p-12 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary/20 to-cyan/20 opacity-50"></div>
+                <div class="relative z-10">
+                    <h2 class="text-4xl md:text-5xl font-heading font-bold mb-8">Ready to Secure Your Privacy?</h2>
+                    <button
+                        class="erase-now-btn px-12 py-5 rounded-full bg-white text-dark text-lg font-bold hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.4)]">
+                        Start Wiping Now
+                    </button>
+                    <p class="mt-6 text-gray-400 text-sm">v2.4.0 • Android 8.0+ • 15MB</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 pt-16 pb-8 bg-black/40 backdrop-blur-sm">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                <a href="#" class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 bg-gradient-to-br from-primary to-cyan rounded-lg flex items-center justify-center">
+                        <i data-feather="shield" class="text-white w-5 h-5"></i>
+                    </div>
+                    <span class="text-2xl font-heading font-bold tracking-wide text-white">ZeroTrace</span>
+                </a>
+                <div class="flex gap-8">
+                    <a href="#" class="text-gray-400 hover:text-cyan transition-colors"><i
+                            data-feather="twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-cyan transition-colors"><i
+                            data-feather="github"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-cyan transition-colors"><i
+                            data-feather="linkedin"></i></a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-white/5 pt-12">
+                <div>
+                    <h4 class="font-bold text-white mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="pages/download.html" class="hover:text-cyan">Download</a></li>
+                        <li><a href="pages/certificate.html" class="hover:text-cyan">Certificate</a></li>
+                        <li><a href="pages/compare.html" class="hover:text-cyan">Pricing</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Resources</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-cyan">Documentation</a></li>
+                        <li><a href="#" class="hover:text-cyan">API</a></li>
+                        <li><a href="#" class="hover:text-cyan">Community</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Company</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-cyan">About</a></li>
+                        <li><a href="#" class="hover:text-cyan">Blog</a></li>
+                        <li><a href="#" class="hover:text-cyan">Careers</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-gray-500">
+                        <li><a href="#" class="hover:text-cyan">Privacy</a></li>
+                        <li><a href="#" class="hover:text-cyan">Terms</a></li>
+                        <li><a href="#" class="hover:text-cyan">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center mt-16 text-gray-600 text-xs">
+                © 2025 ZeroTrace Security Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+
 </html>

@@ -31,6 +31,9 @@ export const createCertificate = async (req: AuthRequest, res: Response): Promis
     const logContent = rawLog || '';
     const logHash = generateHash(logContent);
 
+    // Use consistent timestamp for both signing and storage
+    const certTimestamp = timestamp || new Date().toISOString();
+
     // Prepare certificate payload for signing (includes all required fields)
     const certPayload = {
       wipeId,
@@ -38,21 +41,21 @@ export const createCertificate = async (req: AuthRequest, res: Response): Promis
       deviceModel,
       serialNumber: serialNumber || null,
       method,
-      timestamp: timestamp || new Date().toISOString(),
+      timestamp: certTimestamp,
       logHash,
     };
 
     // Sign the certificate payload (will be canonicalized automatically)
     const signature = signCertificatePayload(certPayload);
 
-    // Create certificate
+    // Create certificate (use same values as signed payload)
     const certificate = new Certificate({
       wipeId,
       userId: req.user.id,
       deviceModel,
-      serialNumber: serialNumber || undefined,
+      serialNumber: serialNumber || null,
       method,
-      timestamp: new Date(timestamp || Date.now()),
+      timestamp: new Date(certTimestamp),
       logHash,
       signature,
       uploaded: !!rawLog,
@@ -107,9 +110,14 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Reconstruct payload for verification (must match signing payload exactly)
+    // Note: userId is populated, so we need to extract the _id
+    const userId = (certificate.userId as any)._id
+      ? (certificate.userId as any)._id.toString()
+      : certificate.userId.toString();
+    
     const certPayload = {
       wipeId: certificate.wipeId,
-      userId: certificate.userId._id?.toString() || certificate.userId,
+      userId: userId,
       deviceModel: certificate.deviceModel,
       serialNumber: certificate.serialNumber || null,
       method: certificate.method,

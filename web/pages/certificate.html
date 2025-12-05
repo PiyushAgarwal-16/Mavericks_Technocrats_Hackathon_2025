@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator - ZeroTrace</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0B5ED7',
+                        secondary: '#0F8BFF',
+                        dark: '#0A0A0A',
+                        neon: '#00D1FF',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Orbitron', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <!-- Libraries for PDF and QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="bg-dark text-gray-100 antialiased selection:bg-neon selection:text-dark">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="bg-blob bg-primary w-96 h-96 top-0 left-1/4 -translate-y-1/2 opacity-20"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-transparent py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-gradient-to-br from-primary to-neon rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,209,255,0.5)]">
+                    <i data-feather="shield" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-heading font-bold tracking-wider text-white group-hover:text-neon transition-colors">ZeroTrace</span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="../index.html" class="text-sm font-medium hover:text-neon transition-colors">Home</a>
+                <a href="download.html" class="text-sm font-medium hover:text-neon transition-colors">Download</a>
+                <a href="certificate.html" class="text-sm font-medium text-neon">Certificate</a>
+                <a href="compare.html" class="text-sm font-medium hover:text-neon transition-colors">Compare</a>
+                <a href="rewards.html" class="text-sm font-medium hover:text-neon transition-colors">Rewards</a>
+                <a href="awareness.html" class="text-sm font-medium hover:text-neon transition-colors">Awareness</a>
+                <button class="erase-now-btn px-6 py-2 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold shadow-[0_0_20px_rgba(11,94,215,0.5)] hover:shadow-[0_0_30px_rgba(0,209,255,0.6)] transition-all transform hover:-translate-y-1">
+                    Erase Now
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-white hover:text-neon">
+                <i data-feather="menu"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full glass-panel border-t border-gray-800 p-4 flex flex-col gap-4">
+            <a href="../index.html" class="block py-2 hover:text-neon">Home</a>
+            <a href="download.html" class="block py-2 hover:text-neon">Download</a>
+            <a href="certificate.html" class="block py-2 text-neon">Certificate</a>
+            <a href="compare.html" class="block py-2 hover:text-neon">Compare</a>
+            <a href="rewards.html" class="block py-2 hover:text-neon">Rewards</a>
+            <a href="awareness.html" class="block py-2 hover:text-neon">Awareness</a>
+            <button class="erase-now-btn w-full py-3 rounded-lg bg-primary text-white font-bold">Erase Now</button>
+        </div>
+    </nav>
+
+    <!-- Certificate Generator Section -->
+    <section class="min-h-screen pt-32 pb-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12" data-aos="fade-down">
+                <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">Certificate <span class="text-gradient">Generator</span></h1>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    Verify your data erasure and generate a tamper-proof PDF certificate for compliance and auditing purposes.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <!-- Form -->
+                <div class="glass-panel p-8 rounded-2xl" data-aos="fade-right">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i data-feather="edit-3" class="text-neon"></i> Device Details
+                    </h3>
+                    <form id="certificate-form" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Certificate ID (Auto-generated)</label>
+                            <input type="text" id="cert-id" readonly class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-gray-500 font-mono cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">Device Model</label>
+                            <input type="text" id="device-name" placeholder="e.g. Samsung Galaxy S21" required class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-neon focus:outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-2">IMEI / Serial Number</label>
+                            <input type="text" id="imei" placeholder="e.g. 354829091234567" required class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-neon focus:outline-none transition-colors">
+                        </div>
+                        <button type="submit" class="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-secondary text-white font-bold hover:shadow-[0_0_20px_rgba(11,94,215,0.4)] transition-all">
+                            Generate Preview
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Preview -->
+                <div id="certificate-preview" class="hidden glass-panel p-8 rounded-2xl border-neon/30 relative overflow-hidden" data-aos="fade-left">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-neon"></div>
+                    
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                            <i data-feather="check-circle" class="w-8 h-8 text-primary"></i>
+                        </div>
+                        <h2 class="text-2xl font-heading font-bold">Certificate of Erasure</h2>
+                        <p class="text-sm text-gray-400 mt-1">NIST 800-88 Compliant</p>
+                    </div>
+
+                    <div class="space-y-4 mb-8 border-t border-b border-white/10 py-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Certificate ID:</span>
+                            <span id="preview-id" class="font-mono text-neon"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Device:</span>
+                            <span id="preview-device" class="font-bold"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">IMEI/Serial:</span>
+                            <span id="preview-imei" class="font-mono"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Date:</span>
+                            <span id="preview-date"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="text-green-400 font-bold">VERIFIED PURGED</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mb-8">
+                        <div id="qrcode" class="p-2 bg-white rounded-lg"></div>
+                    </div>
+
+                    <button id="download-pdf-btn" class="w-full py-3 rounded-lg border border-neon text-neon font-bold hover:bg-neon hover:text-dark transition-all flex items-center justify-center gap-2">
+                        <i data-feather="download"></i> Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-white/10 pt-16 pb-8">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <a href="../index.html" class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary to-neon rounded-lg flex items-center justify-center">
+                            <i data-feather="shield" class="text-white w-4 h-4"></i>
+                        </div>
+                        <span class="text-xl font-heading font-bold tracking-wider text-white">ZeroTrace</span>
+                    </a>
+                    <p class="text-gray-500 text-sm max-w-xs">
+                        The ultimate solution for secure Android data erasure. Protecting your digital footprint one byte at a time.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="download.html" class="hover:text-neon transition-colors">Download</a></li>
+                        <li><a href="certificate.html" class="text-neon">Certificate</a></li>
+                        <li><a href="compare.html" class="hover:text-neon transition-colors">Comparison</a></li>
+                        <li><a href="rewards.html" class="hover:text-neon transition-colors">Rewards</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-neon transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-neon transition-colors">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-600 text-xs">© 2025 ZeroTrace. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="twitter" class="w-4 h-4"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="github" class="w-4 h-4"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="linkedin" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/certificate.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

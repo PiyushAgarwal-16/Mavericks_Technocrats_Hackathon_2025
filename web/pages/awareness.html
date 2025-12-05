@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awareness - ZeroTrace</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbitron:wght@400;500;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0B5ED7',
+                        secondary: '#0F8BFF',
+                        dark: '#0A0A0A',
+                        neon: '#00D1FF',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Orbitron', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body class="bg-dark text-gray-100 antialiased selection:bg-neon selection:text-dark">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="bg-blob bg-primary w-96 h-96 top-0 left-0 -translate-x-1/2 -translate-y-1/2 opacity-20"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 bg-transparent py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="../index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-gradient-to-br from-primary to-neon rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(0,209,255,0.5)]">
+                    <i data-feather="shield" class="text-white w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-heading font-bold tracking-wider text-white group-hover:text-neon transition-colors">ZeroTrace</span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="../index.html" class="text-sm font-medium hover:text-neon transition-colors">Home</a>
+                <a href="download.html" class="text-sm font-medium hover:text-neon transition-colors">Download</a>
+                <a href="certificate.html" class="text-sm font-medium hover:text-neon transition-colors">Certificate</a>
+                <a href="compare.html" class="text-sm font-medium hover:text-neon transition-colors">Compare</a>
+                <a href="rewards.html" class="text-sm font-medium hover:text-neon transition-colors">Rewards</a>
+                <a href="awareness.html" class="text-sm font-medium text-neon">Awareness</a>
+                <button class="erase-now-btn px-6 py-2 rounded-full bg-gradient-to-r from-primary to-secondary text-white font-bold shadow-[0_0_20px_rgba(11,94,215,0.5)] hover:shadow-[0_0_30px_rgba(0,209,255,0.6)] transition-all transform hover:-translate-y-1">
+                    Erase Now
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-white hover:text-neon">
+                <i data-feather="menu"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full glass-panel border-t border-gray-800 p-4 flex flex-col gap-4">
+            <a href="../index.html" class="block py-2 hover:text-neon">Home</a>
+            <a href="download.html" class="block py-2 hover:text-neon">Download</a>
+            <a href="certificate.html" class="block py-2 hover:text-neon">Certificate</a>
+            <a href="compare.html" class="block py-2 hover:text-neon">Compare</a>
+            <a href="rewards.html" class="block py-2 hover:text-neon">Rewards</a>
+            <a href="awareness.html" class="block py-2 text-neon">Awareness</a>
+            <button class="erase-now-btn w-full py-3 rounded-lg bg-primary text-white font-bold">Erase Now</button>
+        </div>
+    </nav>
+
+    <!-- Awareness Section -->
+    <section class="min-h-screen pt-32 pb-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-down">
+                <h1 class="text-4xl md:text-5xl font-heading font-bold mb-4">Security <span class="text-gradient">Awareness</span></h1>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    Learn why data erasure is critical for your privacy and the environment.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12">
+                <!-- Modules Accordion -->
+                <div class="space-y-4" data-aos="fade-right">
+                    <h2 class="text-2xl font-bold mb-6">Learning Modules</h2>
+                    
+                    <!-- Module 1 -->
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <button class="accordion-header w-full p-6 flex justify-between items-center text-left hover:bg-white/5 transition-colors">
+                            <span class="font-bold text-lg">Why Factory Reset Isn't Enough</span>
+                            <i data-feather="chevron-down" class="accordion-icon transition-transform duration-300"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-400 text-sm leading-relaxed border-t border-white/5">
+                            Factory resets often only remove the file pointers, leaving the actual data intact on the storage drive until it is overwritten. Sophisticated recovery tools can easily retrieve photos, messages, and credentials from a "reset" device.
+                        </div>
+                    </div>
+
+                    <!-- Module 2 -->
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <button class="accordion-header w-full p-6 flex justify-between items-center text-left hover:bg-white/5 transition-colors">
+                            <span class="font-bold text-lg">The E-Waste Crisis</span>
+                            <i data-feather="chevron-down" class="accordion-icon transition-transform duration-300"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-400 text-sm leading-relaxed border-t border-white/5">
+                            Millions of devices are discarded annually. Proper data erasure encourages recycling by removing the fear of data theft, keeping toxic components out of landfills and recovering valuable materials.
+                        </div>
+                    </div>
+
+                    <!-- Module 3 -->
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <button class="accordion-header w-full p-6 flex justify-between items-center text-left hover:bg-white/5 transition-colors">
+                            <span class="font-bold text-lg">Understanding NIST 800-88</span>
+                            <i data-feather="chevron-down" class="accordion-icon transition-transform duration-300"></i>
+                        </button>
+                        <div class="hidden p-6 pt-0 text-gray-400 text-sm leading-relaxed border-t border-white/5">
+                            NIST 800-88 is the US government standard for media sanitization. It defines methods for Clear, Purge, and Destroy. ZeroTrace uses the Purge method, which renders data unrecoverable even with state-of-the-art laboratory techniques.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Quiz -->
+                <div class="glass-panel p-8 rounded-2xl" data-aos="fade-left">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <i data-feather="help-circle" class="text-neon"></i> Quick Quiz
+                    </h2>
+                    
+                    <div class="space-y-8">
+                        <!-- Question 1 -->
+                        <div>
+                            <p class="font-bold mb-4">1. Does a factory reset permanently delete all data?</p>
+                            <div class="space-y-2">
+                                <button class="quiz-option w-full p-3 rounded-lg border border-white/10 bg-white/5 text-left hover:bg-white/10 transition-colors" data-correct="false">Yes, absolutely.</button>
+                                <button class="quiz-option w-full p-3 rounded-lg border border-white/10 bg-white/5 text-left hover:bg-white/10 transition-colors" data-correct="true">No, data can often be recovered.</button>
+                            </div>
+                            <p class="quiz-explanation hidden text-sm mt-2"></p>
+                        </div>
+
+                        <!-- Question 2 -->
+                        <div>
+                            <p class="font-bold mb-4">2. What standard does ZeroTrace use?</p>
+                            <div class="space-y-2">
+                                <button class="quiz-option w-full p-3 rounded-lg border border-white/10 bg-white/5 text-left hover:bg-white/10 transition-colors" data-correct="true">NIST 800-88</button>
+                                <button class="quiz-option w-full p-3 rounded-lg border border-white/10 bg-white/5 text-left hover:bg-white/10 transition-colors" data-correct="false">ISO 9001</button>
+                            </div>
+                            <p class="quiz-explanation hidden text-sm mt-2" data-text="NIST 800-88 is the gold standard for data sanitization."></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black border-t border-white/10 pt-16 pb-8">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <a href="../index.html" class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-gradient-to-br from-primary to-neon rounded-lg flex items-center justify-center">
+                            <i data-feather="shield" class="text-white w-4 h-4"></i>
+                        </div>
+                        <span class="text-xl font-heading font-bold tracking-wider text-white">ZeroTrace</span>
+                    </a>
+                    <p class="text-gray-500 text-sm max-w-xs">
+                        The ultimate solution for secure Android data erasure. Protecting your digital footprint one byte at a time.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Product</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="download.html" class="hover:text-neon transition-colors">Download</a></li>
+                        <li><a href="certificate.html" class="hover:text-neon transition-colors">Certificate</a></li>
+                        <li><a href="compare.html" class="hover:text-neon transition-colors">Comparison</a></li>
+                        <li><a href="rewards.html" class="hover:text-neon transition-colors">Rewards</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-neon transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-neon transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-neon transition-colors">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-600 text-xs">© 2025 ZeroTrace. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="twitter" class="w-4 h-4"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="github" class="w-4 h-4"></i></a>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors"><i data-feather="linkedin" class="w-4 h-4"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/awareness.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>
