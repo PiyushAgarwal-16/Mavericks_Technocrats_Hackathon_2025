@@ -1,0 +1,132 @@
+name: ZeroTrace CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: ./backend
+        run: npm run lint
+      
+      - name: Run tests
+        working-directory: ./backend
+        run: npm test
+        env:
+          MONGODB_URI_TEST: mongodb://localhost:27017/zerotrace-test
+          JWT_SECRET: test-secret
+      
+      - name: Build
+        working-directory: ./backend
+        run: npm run build
+
+  web-build:
+    name: Web Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./web
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: ./web
+        run: npm run lint
+      
+      - name: Build
+        working-directory: ./web
+        run: npm run build
+
+  scripts-test:
+    name: Scripts Validation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Validate Linux script
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x scripts/linux/wipe-device.sh
+          bash -n scripts/linux/wipe-device.sh
+          shellcheck scripts/linux/wipe-device.sh || true
+      
+      - name: Validate Windows script
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $result = Get-Command Test-ScriptFileInfo -ErrorAction SilentlyContinue
+          if ($result) {
+            # PSScriptAnalyzer available, run it
+            Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser
+            Invoke-ScriptAnalyzer -Path scripts/windows/wipe-device.ps1 -Recurse
+          } else {
+            Write-Host "Skipping PSScriptAnalyzer (not available)"
+          }
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: zerotrace-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
