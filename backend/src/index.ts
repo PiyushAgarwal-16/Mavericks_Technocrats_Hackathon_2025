@@ -1,42 +1,31 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import dotenv from 'dotenv';
-import { connectDatabase } from './config/database';
-import certificateRoutes from './routes/certificate.routes';
-import authRoutes from './routes/auth.routes';
-import { errorHandler } from './middleware/errorHandler';
+/**
+ * Server Entry Point
+ * 
+ * Initializes the Express application, connects to the database,
+ * and starts the HTTP server.
+ */
 
+import dotenv from 'dotenv';
+import { createApp } from './app';
+import { connectDatabase } from './config/database';
+
+// Load environment variables
 dotenv.config();
 
-const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/certificates', certificateRoutes);
-
-// Error handling
-app.use(errorHandler);
-
-// Start server
+/**
+ * Start the server
+ */
 const startServer = async () => {
   try {
+    // Connect to database
     await connectDatabase();
+    
+    // Create Express app
+    const app = createApp();
+    
+    // Start listening
     app.listen(PORT, () => {
       console.log(`🚀 ZeroTrace Backend running on port ${PORT}`);
       console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -48,5 +37,3 @@ const startServer = async () => {
 };
 
 startServer();
-
-export default app;
