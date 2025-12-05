@@ -93,3 +93,10 @@ Power users might prefer Railway.
 2.  Click **Generate Domain** to get a public URL (e.g., `web-production-1234.up.railway.app`).
 3.  Use this URL (plus `/api`) in your Vercel and Flutter apps.
 
+### Troubleshooting Railway Build
+If Railway fails with "file with no instructions" or picks up the wrong Dockerfile:
+1.  Go to **Settings** -> **Build**.
+2.  Set **Dockerfile Path** to `/backend/Dockerfile`.
+3.  Ensure **Root Directory** is `/backend`.
+
+
