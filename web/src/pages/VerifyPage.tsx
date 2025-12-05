@@ -22,32 +22,55 @@ export const VerifyPage: React.FC = () => {
     setResult(null);
 
     try {
+      // First, validate the certificate ID
+      const validation = await api.certificates.validate(wipeId.trim());
+      
+      if (!validation.valid) {
+        // Invalid format - likely fake
+        setError(
+          '❌ Invalid Certificate ID Format\n\n' +
+          'The ID you entered doesn\'t match the expected format.\n' +
+          'This appears to be a fake or incorrectly entered certificate ID.\n\n' +
+          '✅ Valid format: ZT-[TIMESTAMP]-[RANDOM]\n' +
+          '📝 Example: ZT-1733389800000-ABCD1234567890\n\n' +
+          '⚠️ Reason: ' + (validation.reason || 'Invalid format')
+        );
+        return;
+      }
+      
+      if (!validation.exists) {
+        // Valid format but not uploaded yet
+        setError(
+          '⏳ Certificate Pending Upload\n\n' +
+          'The certificate ID format is valid, but the wipe record hasn\'t been uploaded to our servers yet.\n\n' +
+          '🔍 This could mean:\n' +
+          '• The device that performed the wipe is offline\n' +
+          '• The certificate was generated in offline mode\n' +
+          '• Upload is still in progress\n\n' +
+          '💡 What to do:\n' +
+          '• Ensure the device has internet connection\n' +
+          '• Wait a few moments and try again\n' +
+          '• Check the PDF certificate for local verification\n\n' +
+          'If this certificate was just generated, please allow time for the upload to complete.'
+        );
+        return;
+      }
+      
+      // Certificate exists, now verify it
       const data = await api.certificates.verify(wipeId.trim());
       setResult(data);
     } catch (err: any) {
-      // Provide helpful error messages based on the error type
-      if (err.response?.status === 404) {
+      // Handle other errors
+      if (err.code === 'ERR_NETWORK' || err.message.includes('Network')) {
         setError(
-          `Certificate not found in our system. This could mean: \n` +
-          `• The wipe hasn't been uploaded yet (check your device's internet connection)\n` +
-          `• The certificate ID is incorrect\n` +
-          `• The ID format is valid but no matching wipe exists\n\n` +
-          `If you just generated this certificate, please wait a moment and try again.`
-        );
-      } else if (!wipeId.match(/^ZT-\d+-[A-F0-9]+$/i)) {
-        setError(
-          'Invalid certificate ID format. Expected format: ZT-TIMESTAMP-RANDOM\n' +
-          'Example: ZT-176496.....'
-        );
-      } else if (err.code === 'ERR_NETWORK' || err.message.includes('Network')) {
-        setError(
-          'Unable to reach verification server. Please check your internet connection and try again.'
+          '🌐 Network Connection Error\n\n' +
+          'Unable to reach verification server.\n' +
+          'Please check your internet connection and try again.'
         );
       } else {
         setError(
-          err.response?.data?.error ||
-          err.message ||
-          'Failed to verify certificate. Please try again.'
+          '❌ Verification Failed\n\n' +
+          (err.response?.data?.error || err.message || 'An unexpected error occurred. Please try again.')
         );
       }
     } finally {

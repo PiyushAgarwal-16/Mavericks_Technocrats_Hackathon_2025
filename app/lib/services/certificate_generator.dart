@@ -7,6 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../models/wipe_result.dart';
 import '../models/storage_device.dart';
+import 'offline_certificate_queue.dart';
 
 /// Service for generating and uploading wipe certificates
 class CertificateGenerator {
@@ -297,12 +298,22 @@ class CertificateGenerator {
           wipeId: wipeId,
         );
       } catch (e) {
-        // Fallback for offline mode
+        // Fallback for offline mode - add to queue for later upload
         uploadResult = CertificateUploadResult(
           success: false,
           errorMessage: 'Offline mode: Server unreachable ($e)',
           wipeId: wipeId, // Ensure we keep the local ID
         );
+        
+        // Add to offline queue for automatic retry when online
+        final pendingCert = PendingCertificate.fromWipe(
+          wipeId: wipeId,
+          wipeResult: wipeResult,
+          device: device,
+          method: method,
+          userId: userId,
+        );
+        await OfflineCertificateQueue().addToQueue(pendingCert);
       }
 
       // If upload failed but PDF generation worked, consider it a partial success (Offline Mode)
@@ -313,6 +324,11 @@ class CertificateGenerator {
       // otherwise use our local ID.
       final finalWipeId = uploadResult.wipeId ?? wipeId;
       
+      final pendingCount = OfflineCertificateQueue().pendingCount;
+      final offlineMessage = pendingCount > 0
+          ? 'PDF Certificate saved locally. $pendingCount wipe record(s) pending upload. Will automatically sync when internet connection is restored.'
+          : 'PDF Certificate saved locally. Wipe record will be uploaded when internet connection is restored.';
+      
       return CertificateGenerationResult(
         success: uploadResult.success || isOfflineSuccess,
         pdfFile: pdfFile,
@@ -321,7 +337,7 @@ class CertificateGenerator {
         signature: uploadResult.signature,
         errorMessage: uploadResult.success 
             ? null 
-            : 'Offline Certificate Generated. Verification unavailable.',
+            : offlineMessage,
       );
     } catch (e) {
       return CertificateGenerationResult(

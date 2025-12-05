@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'screens/drive_list_screen.dart';
 import 'theme/zerotrace_theme.dart';
+import 'services/offline_certificate_queue.dart';
+import 'services/connectivity_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize offline certificate queue
+  await OfflineCertificateQueue().initialize();
+  
+  // Start connectivity monitoring and auto-upload service
+  ConnectivityService().startMonitoring();
+  
   runApp(const ZeroTraceApp());
 }
 

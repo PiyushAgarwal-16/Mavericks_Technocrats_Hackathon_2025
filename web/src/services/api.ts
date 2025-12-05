@@ -128,6 +128,18 @@ export const api = {
       return response.data;
     },
 
+    validate: async (wipeId: string): Promise<{
+      valid: boolean;
+      exists: boolean;
+      uploaded?: boolean;
+      reason?: string;
+      message: string;
+      createdAt?: string;
+    }> => {
+      const response = await apiClient.get(`/certificates/validate/${wipeId}`);
+      return response.data;
+    },
+
     verify: async (wipeId: string): Promise<VerificationResult> => {
       const response = await apiClient.get(`/certificates/${wipeId}`);
       return response.data;

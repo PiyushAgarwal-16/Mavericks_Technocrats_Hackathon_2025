@@ -175,3 +175,52 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
     res.status(500).json({ error: error.message });
   }
 };
+
+/**
+ * GET /certificates/validate/:wipeId
+ * Validate certificate ID format without fetching full certificate
+ * Useful for distinguishing between fake IDs and pending uploads
+ */
+export const validateCertificateId = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { wipeId } = req.params;
+
+    // Validate format: ZT-[timestamp]-[random hex]
+    const formatRegex = /^ZT-\d{13,}-[A-F0-9]+$/i;
+    const isValidFormat = formatRegex.test(wipeId);
+
+    if (!isValidFormat) {
+      res.json({
+        valid: false,
+        exists: false,
+        reason: 'invalid_format',
+        message: 'Certificate ID format is invalid. This appears to be a fake or malformed ID.',
+      });
+      return;
+    }
+
+    // Check if certificate exists
+    const certificate = await Certificate.findOne({ wipeId }).select('wipeId uploaded createdAt');
+    
+    if (certificate) {
+      res.json({
+        valid: true,
+        exists: true,
+        uploaded: certificate.uploaded,
+        createdAt: certificate.createdAt,
+        message: 'Certificate found in system.',
+      });
+    } else {
+      // Valid format but not found - likely pending upload
+      res.json({
+        valid: true,
+        exists: false,
+        reason: 'not_found',
+        message: 'Certificate ID format is valid, but the wipe record hasn\'t been uploaded yet. The device may be offline or the upload is pending.',
+      });
+    }
+  } catch (error: any) {
+    console.error('Validate certificate ID error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

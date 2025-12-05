@@ -19,6 +19,7 @@ dependencies:
   
   # HTTP & Networking
   http: ^1.2.0
+  connectivity_plus: ^5.0.2
   
   # Cryptography
   crypto: ^3.0.3
