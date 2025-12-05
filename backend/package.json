@@ -9,6 +9,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
+    "test:signing": "ts-node tests/signing.test.ts",
     "lint": "eslint src --ext .ts"
   },
   "keywords": ["zerotrace", "certificate", "verification"],
