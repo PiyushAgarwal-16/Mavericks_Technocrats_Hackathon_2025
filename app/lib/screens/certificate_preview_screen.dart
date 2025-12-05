@@ -1,19 +1,29 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/storage_device.dart';
 import '../models/wipe_result.dart';
+import '../services/certificate_generator.dart';
 
 /// Screen to preview and submit certificate to backend
 class CertificatePreviewScreen extends StatefulWidget {
   final WipeResult wipeResult;
   final StorageDevice device;
   final String method;
+  final String? userId;
+  final String? backendUrl;
+  final String? authToken;
 
   const CertificatePreviewScreen({
     super.key,
     required this.wipeResult,
     required this.device,
     required this.method,
+    this.userId,
+    this.backendUrl,
+    this.authToken,
   });
 
   @override
@@ -22,36 +32,106 @@ class CertificatePreviewScreen extends StatefulWidget {
 }
 
 class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
-  bool _isUploading = false;
-  bool _uploadSuccess = false;
+  bool _isGenerating = false;
+  bool _generationSuccess = false;
+  File? _pdfFile;
   String? _certificateId;
   String? _verificationUrl;
+  String? _signature;
+  String? _errorMessage;
+  late CertificateGenerator _certificateGenerator;
 
-  Future<void> _submitToBackend() async {
+  @override
+  void initState() {
+    super.initState();
+    _certificateGenerator = CertificateGenerator(
+      backendUrl: widget.backendUrl ?? 'http://localhost:5000',
+      authToken: widget.authToken,
+    );
+  }
+
+  Future<void> _generateCertificate() async {
     setState(() {
-      _isUploading = true;
+      _isGenerating = true;
+      _errorMessage = null;
     });
 
-    // TODO: Implement actual API call to backend
-    // This would use the ApiService to POST to /api/certificates
-    // Payload would include:
-    // - deviceModel: device.name
-    // - serialNumber: device.metadata['SerialNumber']
-    // - method: method
-    // - timestamp: ISO8601 timestamp
-    // - rawLog: wipeResult.logContent
-    // - devicePath: device.deviceId
-    // - duration: wipeResult.durationSeconds
-    // - exitCode: wipeResult.exitCode
+    try {
+      final result = await _certificateGenerator.generateAndUpload(
+        wipeResult: widget.wipeResult,
+        device: widget.device,
+        method: widget.method,
+        userId: widget.userId ?? 'default-user',
+      );
 
-    await Future.delayed(const Duration(seconds: 2)); // Simulate API call
+      setState(() {
+        _isGenerating = false;
+        _generationSuccess = result.success;
+        _pdfFile = result.pdfFile;
+        _certificateId = result.wipeId;
+        _verificationUrl = result.verificationUrl;
+        _signature = result.signature;
+        _errorMessage = result.errorMessage;
+      });
 
-    setState(() {
-      _isUploading = false;
-      _uploadSuccess = true;
-      _certificateId = 'ZT-${DateTime.now().millisecondsSinceEpoch}-ABC123';
-      _verificationUrl = 'https://zerotrace.app/verify/$_certificateId';
-    });
+      if (result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Certificate generated and uploaded successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${result.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _errorMessage = e.toString();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate certificate: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _viewPdfPreview() async {
+    if (_pdfFile == null || !await _pdfFile!.exists()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('PDF file not found')),
+      );
+      return;
+    }
+
+    // Navigate to PDF preview screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PdfPreviewScreen(pdfFile: _pdfFile!),
+      ),
+    );
+  }
+
+  Future<void> _openVerificationUrl() async {
+    if (_verificationUrl == null) return;
+    
+    final uri = Uri.parse(_verificationUrl!);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open verification URL')),
+      );
+    }
   }
 
   void _copyToClipboard(String text, String label) {
@@ -176,7 +256,7 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
             const SizedBox(height: 24),
 
             // Certificate section
-            if (!_uploadSuccess) ...[
+            if (!_generationSuccess) ...[
               const Text(
                 'Generate Certificate',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -190,15 +270,15 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                       const Icon(Icons.workspace_premium, size: 64),
                       const SizedBox(height: 16),
                       const Text(
-                        'Create a cryptographically signed certificate to verify this wipe operation.',
+                        'Create a cryptographically signed certificate and PDF report to verify this wipe operation.',
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _isUploading ? null : _submitToBackend,
-                          icon: _isUploading
+                          onPressed: _isGenerating ? null : _generateCertificate,
+                          icon: _isGenerating
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -208,12 +288,20 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                                 )
                               : const Icon(Icons.upload),
                           label: Text(
-                            _isUploading
+                            _isGenerating
                                 ? 'Generating...'
-                                : 'Generate Certificate',
+                                : 'Generate Certificate & PDF',
                           ),
                         ),
                       ),
+                      if (_errorMessage != null) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -249,21 +337,41 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                         'Certificate ID',
                         _certificateId!,
                       ),
-                      const SizedBox(height: 8),
-                      _buildCopyableField(
-                        'Verification URL',
-                        _verificationUrl!,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Open verification URL in browser
-                          },
-                          icon: const Icon(Icons.open_in_browser),
-                          label: const Text('View Certificate'),
+                      if (_verificationUrl != null) ...[
+                        const SizedBox(height: 8),
+                        _buildCopyableField(
+                          'Verification URL',
+                          _verificationUrl!,
                         ),
+                      ],
+                      if (_signature != null) ...[
+                        const SizedBox(height: 8),
+                        _buildCopyableField(
+                          'Digital Signature',
+                          '${_signature!.substring(0, 32)}...',
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _viewPdfPreview,
+                              icon: const Icon(Icons.picture_as_pdf),
+                              label: const Text('View PDF'),
+                            ),
+                          ),
+                          if (_verificationUrl != null) ...[
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _openVerificationUrl,
+                                icon: const Icon(Icons.open_in_browser),
+                                label: const Text('Verify Online'),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
@@ -353,6 +461,8 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                 child: Text(
                   value,
                   style: const TextStyle(fontFamily: 'monospace'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               IconButton(
@@ -362,6 +472,69 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                 constraints: const BoxConstraints(),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Screen to preview the generated PDF certificate
+class PdfPreviewScreen extends StatelessWidget {
+  final File pdfFile;
+
+  const PdfPreviewScreen({
+    super.key,
+    required this.pdfFile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Certificate PDF Preview'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () async {
+              // Share PDF using the printing package
+              await Printing.sharePdf(
+                bytes: await pdfFile.readAsBytes(),
+                filename: pdfFile.path.split('/').last,
+              );
+            },
+            tooltip: 'Share PDF',
+          ),
+          IconButton(
+            icon: const Icon(Icons.print),
+            onPressed: () async {
+              // Print PDF using the printing package
+              await Printing.layoutPdf(
+                onLayout: (format) => pdfFile.readAsBytes(),
+              );
+            },
+            tooltip: 'Print PDF',
+          ),
+        ],
+      ),
+      body: PdfPreview(
+        build: (format) => pdfFile.readAsBytes(),
+        canChangePageFormat: false,
+        canChangeOrientation: false,
+        canDebug: false,
+        pdfFileName: pdfFile.path.split('/').last,
+        actions: [
+          PdfPreviewAction(
+            icon: const Icon(Icons.save),
+            onPressed: (context, build, pageFormat) async {
+              // Save dialog
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('PDF saved to: ${pdfFile.path}'),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
           ),
         ],
       ),
