@@ -12,7 +12,7 @@ const router = Router();
  * GET /health
  * Returns server health status
  */
-router.get('/', (req: Request, res: Response) => {
+router.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),

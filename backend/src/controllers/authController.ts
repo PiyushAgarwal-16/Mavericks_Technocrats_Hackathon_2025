@@ -1,48 +1,44 @@
 /**
  * Authentication Controller
  * 
- * Handles user authentication operations including registration,
- * login, and user profile retrieval.
+ * Handles user authentication operations including registration and login.
  */
 
-import { Response } from 'express';
-import { validationResult } from 'express-validator';
-import jwt from 'jsonwebtoken';
+import { Request, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { AuthRequest } from '../middleware/auth';
 
 /**
- * POST /api/auth/register
+ * POST /auth/register
  * Register a new user
  */
-export const register = async (req: AuthRequest, res: Response) => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const { email, password, role } = req.body;
 
-    const { email, password, name, organization } = req.body;
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      res.status(400).json({ error: 'User already exists' });
+      return;
     }
 
     const user = new User({
       email,
-      password,
-      name,
-      organization,
-      role: 'operator',
+      passwordHash: password, // Will be hashed by pre-save hook
+      role: role || 'operator',
     });
 
     await user.save();
 
+    const jwtSecret = process.env.JWT_SECRET || 'default-secret';
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'default-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret
     );
 
     res.status(201).json({
@@ -50,7 +46,6 @@ export const register = async (req: AuthRequest, res: Response) => {
       user: {
         id: user._id,
         email: user.email,
-        name: user.name,
         role: user.role,
       },
     });
@@ -61,32 +56,34 @@ export const register = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * POST /api/auth/login
+ * POST /auth/login
  * Login user
  */
-export const login = async (req: AuthRequest, res: Response) => {
+export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email, isActive: true });
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      res.status(401).json({ error: 'Invalid credentials' });
+      return;
     }
 
+    const jwtSecret = process.env.JWT_SECRET || 'default-secret';
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'default-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret
     );
 
     res.json({
@@ -94,29 +91,11 @@ export const login = async (req: AuthRequest, res: Response) => {
       user: {
         id: user._id,
         email: user.email,
-        name: user.name,
         role: user.role,
       },
     });
   } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * GET /api/auth/me
- * Get current user profile
- */
-export const me = async (req: AuthRequest, res: Response) => {
-  try {
-    const user = await User.findById(req.user?.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json({ user });
-  } catch (error: any) {
-    console.error('Me error:', error);
     res.status(500).json({ error: error.message });
   }
 };

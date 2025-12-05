@@ -10,11 +10,8 @@ import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
   email: string;
-  password: string;
+  passwordHash: string;
   role: 'admin' | 'operator';
-  name: string;
-  organization?: string;
-  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -30,26 +27,14 @@ const UserSchema: Schema = new Schema(
       trim: true,
       index: true,
     },
-    password: {
+    passwordHash: {
       type: String,
       required: true,
-      minlength: 8,
     },
     role: {
       type: String,
       enum: ['admin', 'operator'],
       default: 'operator',
-    },
-    name: {
-      type: String,
-      required: true,
-    },
-    organization: {
-      type: String,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
     },
   },
   {
@@ -59,11 +44,12 @@ const UserSchema: Schema = new Schema(
 
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('passwordHash')) return next();
   
   try {
     const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    const currentPassword = this.passwordHash as string;
+    this.passwordHash = await bcrypt.hash(currentPassword, salt);
     next();
   } catch (error: any) {
     next(error);
@@ -74,7 +60,7 @@ UserSchema.pre('save', async function (next) {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
+  return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
 export default mongoose.model<IUser>('User', UserSchema);

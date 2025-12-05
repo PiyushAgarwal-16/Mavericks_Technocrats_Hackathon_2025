@@ -9,9 +9,8 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import healthRouter from './routes/health';
-// Import other routes as they are created
-// import authRoutes from './routes/auth.routes';
-// import certificateRoutes from './routes/certificate.routes';
+import authRoutes from './routes/auth';
+import certificateRoutes from './routes/certificates';
 
 export function createApp(): Application {
   const app: Application = express();
@@ -31,8 +30,8 @@ export function createApp(): Application {
 
   // Routes
   app.use('/health', healthRouter);
-  // app.use('/api/auth', authRoutes);
-  // app.use('/api/certificates', certificateRoutes);
+  app.use('/auth', authRoutes);
+  app.use('/certificates', certificateRoutes);
 
   return app;
 }

@@ -2,74 +2,66 @@
  * Certificate Model
  * 
  * Defines the Certificate schema for device wipe certification.
- * Includes device information, wipe details, operator info, and digital signature.
+ * Includes device information, wipe details, and digital signature.
  */
 
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICertificate extends Document {
-  certificateId: string;
-  deviceInfo: {
-    serialNumber: string;
-    model: string;
-    capacity: string;
-    type: 'USB' | 'HDD' | 'SSD' | 'OTHER';
-  };
-  wipeDetails: {
-    method: string;
-    passes: number;
-    standard: string;
-    duration: number;
-    timestamp: Date;
-  };
-  operator: {
-    name: string;
-    organization?: string;
-    email?: string;
-  };
+  wipeId: string;
+  userId: mongoose.Types.ObjectId;
+  deviceModel: string;
+  serialNumber?: string;
+  method: string;
+  timestamp: Date;
+  logHash: string;
   signature: string;
-  verified: boolean;
+  uploaded: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const CertificateSchema: Schema = new Schema(
   {
-    certificateId: {
+    wipeId: {
       type: String,
       required: true,
       unique: true,
       index: true,
     },
-    deviceInfo: {
-      serialNumber: { type: String, required: true },
-      model: { type: String, required: true },
-      capacity: { type: String, required: true },
-      type: {
-        type: String,
-        enum: ['USB', 'HDD', 'SSD', 'OTHER'],
-        required: true,
-      },
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
     },
-    wipeDetails: {
-      method: { type: String, required: true },
-      passes: { type: Number, required: true, min: 1 },
-      standard: { type: String, required: true },
-      duration: { type: Number, required: true },
-      timestamp: { type: Date, required: true },
+    deviceModel: {
+      type: String,
+      required: true,
     },
-    operator: {
-      name: { type: String, required: true },
-      organization: { type: String },
-      email: { type: String },
+    serialNumber: {
+      type: String,
+      sparse: true,
+    },
+    method: {
+      type: String,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+    },
+    logHash: {
+      type: String,
+      required: true,
     },
     signature: {
       type: String,
       required: true,
     },
-    verified: {
+    uploaded: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   {
@@ -78,7 +70,8 @@ const CertificateSchema: Schema = new Schema(
 );
 
 // Indexes for fast lookups
-CertificateSchema.index({ 'deviceInfo.serialNumber': 1 });
+CertificateSchema.index({ wipeId: 1 });
+CertificateSchema.index({ userId: 1 });
 CertificateSchema.index({ createdAt: -1 });
 
 export default mongoose.model<ICertificate>('Certificate', CertificateSchema);

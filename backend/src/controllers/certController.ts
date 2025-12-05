@@ -1,83 +1,84 @@
 /**
  * Certificate Controller
  * 
- * Handles certificate-related operations including creation, retrieval,
- * verification, and listing.
+ * Handles certificate creation and verification with RSA signing.
  */
 
 import { Response } from 'express';
-import { validationResult } from 'express-validator';
-import crypto from 'crypto';
 import Certificate from '../models/Certificate';
+import WipeLog from '../models/WipeLog';
 import { AuthRequest } from '../middleware/auth';
+import { signData, verifySignature, generateHash, generateWipeId } from '../utils/crypto';
 
 /**
- * Generate a unique certificate ID
+ * POST /certificates
+ * Create a new certificate with optional log file upload
  */
-const generateCertificateId = (): string => {
-  return `ZT-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-};
-
-/**
- * Sign certificate data
- * TODO: Implement proper RSA signing with private key
- */
-const signCertificate = (data: any): string => {
-  const secret = process.env.JWT_SECRET || 'default-secret';
-  return crypto
-    .createHmac('sha256', secret)
-    .update(JSON.stringify(data))
-    .digest('hex');
-};
-
-/**
- * POST /api/certificates
- * Create a new certificate
- */
-export const createCertificate = async (req: AuthRequest, res: Response) => {
+export const createCertificate = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const { deviceModel, serialNumber, method, timestamp, rawLog, devicePath, duration, exitCode } = req.body;
+
+    if (!deviceModel || !method || !req.user?.id) {
+      res.status(400).json({ error: 'Missing required fields' });
+      return;
     }
 
-    const { deviceInfo, wipeDetails, operator } = req.body;
-    const certificateId = generateCertificateId();
+    // Generate unique wipe ID
+    const wipeId = generateWipeId();
 
-    const dataToSign = {
-      certificateId,
-      deviceInfo,
-      wipeDetails,
-      operator,
-      timestamp: new Date().toISOString(),
+    // Prepare certificate payload for signing
+    const certPayload = {
+      wipeId,
+      userId: req.user.id,
+      deviceModel,
+      serialNumber: serialNumber || null,
+      method,
+      timestamp: timestamp || new Date().toISOString(),
     };
 
-    const signature = signCertificate(dataToSign);
+    // Generate log hash
+    const logContent = rawLog || '';
+    const logHash = generateHash(logContent);
 
+    // Sign the certificate payload
+    const dataToSign = JSON.stringify({ ...certPayload, logHash });
+    const signature = signData(dataToSign);
+
+    // Create certificate
     const certificate = new Certificate({
-      certificateId,
-      deviceInfo,
-      wipeDetails: {
-        ...wipeDetails,
-        timestamp: new Date(wipeDetails.timestamp || Date.now()),
-      },
-      operator,
+      wipeId,
+      userId: req.user.id,
+      deviceModel,
+      serialNumber: serialNumber || undefined,
+      method,
+      timestamp: new Date(timestamp || Date.now()),
+      logHash,
       signature,
-      verified: true,
+      uploaded: !!rawLog,
     });
 
     await certificate.save();
 
+    // Create wipe log if raw log provided
+    if (rawLog && devicePath && duration !== undefined && exitCode !== undefined) {
+      const wipeLog = new WipeLog({
+        wipeId,
+        rawLog,
+        devicePath,
+        duration,
+        exitCode,
+      });
+      await wipeLog.save();
+    }
+
+    // Generate verification URL
+    const verificationUrl = `${req.protocol}://${req.get('host')}/certificates/${wipeId}`;
+
     res.status(201).json({
-      success: true,
-      certificate: {
-        certificateId: certificate.certificateId,
-        deviceInfo: certificate.deviceInfo,
-        wipeDetails: certificate.wipeDetails,
-        operator: certificate.operator,
-        signature: certificate.signature,
-        createdAt: certificate.createdAt,
-      },
+      wipeId,
+      verificationUrl,
+      signature,
+      logHash,
     });
   } catch (error: any) {
     console.error('Create certificate error:', error);
@@ -86,87 +87,64 @@ export const createCertificate = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * GET /api/certificates/:certificateId
- * Get certificate by ID (protected)
+ * GET /certificates/:wipeId
+ * Verify and retrieve certificate
  */
-export const getCertificate = async (req: AuthRequest, res: Response) => {
+export const getCertificate = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { certificateId } = req.params;
+    const { wipeId } = req.params;
 
-    const certificate = await Certificate.findOne({ certificateId });
+    const certificate = await Certificate.findOne({ wipeId }).populate('userId', 'email role');
     if (!certificate) {
-      return res.status(404).json({ error: 'Certificate not found' });
-    }
-
-    res.json({ certificate });
-  } catch (error: any) {
-    console.error('Get certificate error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * GET /api/certificates/verify/:certificateId
- * Verify certificate (public endpoint)
- */
-export const verifyCertificate = async (req: AuthRequest, res: Response) => {
-  try {
-    const { certificateId } = req.params;
-
-    const certificate = await Certificate.findOne({ certificateId });
-    if (!certificate) {
-      return res.status(404).json({ 
-        verified: false, 
+      res.status(404).json({ 
+        verified: false,
         error: 'Certificate not found' 
       });
+      return;
     }
 
-    // TODO: Verify signature against public key
+    // Reconstruct payload for verification
+    const certPayload = {
+      wipeId: certificate.wipeId,
+      userId: certificate.userId,
+      deviceModel: certificate.deviceModel,
+      serialNumber: certificate.serialNumber || null,
+      method: certificate.method,
+      timestamp: certificate.timestamp.toISOString(),
+    };
+
+    const dataToVerify = JSON.stringify({ ...certPayload, logHash: certificate.logHash });
+    
+    // Verify signature
+    const isValid = verifySignature(dataToVerify, certificate.signature);
+
+    // Get associated wipe log if exists
+    let wipeLog = null;
+    if (certificate.uploaded) {
+      wipeLog = await WipeLog.findOne({ wipeId });
+    }
 
     res.json({
-      verified: certificate.verified,
+      verified: isValid,
       certificate: {
-        certificateId: certificate.certificateId,
-        deviceInfo: certificate.deviceInfo,
-        wipeDetails: certificate.wipeDetails,
-        operator: certificate.operator,
-        createdAt: certificate.createdAt,
+        wipeId: certificate.wipeId,
+        deviceModel: certificate.deviceModel,
+        serialNumber: certificate.serialNumber,
+        method: certificate.method,
+        timestamp: certificate.timestamp,
+        logHash: certificate.logHash,
         signature: certificate.signature,
+        uploaded: certificate.uploaded,
+        createdAt: certificate.createdAt,
       },
+      wipeLog: wipeLog ? {
+        devicePath: wipeLog.devicePath,
+        duration: wipeLog.duration,
+        exitCode: wipeLog.exitCode,
+      } : null,
     });
   } catch (error: any) {
-    console.error('Verify certificate error:', error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * GET /api/certificates
- * List all certificates (admin only)
- */
-export const listCertificates = async (req: AuthRequest, res: Response) => {
-  try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const skip = (page - 1) * limit;
-
-    const total = await Certificate.countDocuments();
-    const certificates = await Certificate.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    res.json({
-      certificates,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error: any) {
-    console.error('List certificates error:', error);
+    console.error('Get certificate error:', error);
     res.status(500).json({ error: error.message });
   }
 };
