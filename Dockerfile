@@ -7,11 +7,15 @@ WORKDIR /app/backend
 
 # Copy backend package files
 COPY backend/package*.json ./
-RUN npm install --omit=dev
+# Install ALL dependencies (including devDependencies) for build
+RUN npm install
 
 # Copy backend source
 COPY backend/ ./
 RUN npm run build
+
+# Clean dev dependencies after build
+RUN npm prune --omit=dev
 
 # Production stage
 FROM node:18-alpine
