@@ -17,15 +17,16 @@ import { signCertificatePayload, verifyCertificateSignature, computeSHA256 } fro
  */
 export const createCertificate = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { deviceModel, serialNumber, method, timestamp, rawLog, devicePath, duration, exitCode } = req.body;
+    const { deviceModel, serialNumber, method, timestamp, rawLog, devicePath, duration, exitCode, wipeId: providedWipeId } = req.body;
 
     if (!deviceModel || !method || !req.user?.id) {
       res.status(400).json({ error: 'Missing required fields' });
       return;
     }
 
-    // Generate unique wipe ID
-    const wipeId = generateWipeId();
+    // Use provided wipe ID (from mobile app) or generate a new one
+    // This ensures the ID on the PDF (generated locally) matches the backend record
+    const wipeId = providedWipeId || generateWipeId();
 
     // Generate log hash
     const logContent = rawLog || '';
