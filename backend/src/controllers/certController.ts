@@ -100,11 +100,11 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
 
     const certificate = await Certificate.findOne({ wipeId }).populate('userId', 'email role');
     if (!certificate) {
-      res.status(404).json({ 
+      res.status(404).json({
         verified: false,
         signatureValid: false,
         logHashMatches: false,
-        error: 'Certificate not found' 
+        error: 'Certificate not found'
       });
       return;
     }
@@ -122,7 +122,7 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
       // ObjectId reference
       userId = certificate.userId.toString();
     }
-    
+
     const certPayload = {
       wipeId: certificate.wipeId,
       userId: userId,
@@ -138,7 +138,7 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
 
     // Verify signature using canonicalized payload
     const signatureValid = verifyCertificateSignature(certPayload, certificate.signature);
-    
+
     console.log(signatureValid ? '✅ Signature valid' : '❌ Signature invalid');
 
     // Get associated wipe log and verify log hash
@@ -200,7 +200,9 @@ export const validateCertificateId = async (req: AuthRequest, res: Response): Pr
 
     // Validate format: ZT-[timestamp]-[random hex]
     // The 'i' flag makes it case-insensitive, so both upper and lowercase hex work
-    const formatRegex = /^ZT-\d{13}-[A-F0-9]+$/i;
+    // Allow 10-15 digits for timestamp to cover a wide range of dates (past and future)
+    // 10 digits = seconds precision (if ever used), 13 digits = ms precision
+    const formatRegex = /^ZT-\d{10,15}-[A-F0-9]+$/i;
     const isValidFormat = formatRegex.test(wipeId);
 
     if (!isValidFormat) {
@@ -215,7 +217,7 @@ export const validateCertificateId = async (req: AuthRequest, res: Response): Pr
 
     // Check if certificate exists
     const certificate = await Certificate.findOne({ wipeId }).select('wipeId uploaded createdAt');
-    
+
     if (certificate) {
       res.json({
         valid: true,
