@@ -9,7 +9,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICertificate extends Document {
   wipeId: string;
-  userId: mongoose.Types.ObjectId;
+  userId: mongoose.Types.ObjectId | string;
   deviceModel: string;
   serialNumber?: string;
   method: string;
@@ -30,8 +30,7 @@ const CertificateSchema: Schema = new Schema(
       index: true,
     },
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
+      type: Schema.Types.Mixed, // Allow both ObjectId and String for API key auth
       required: true,
       index: true,
     },
