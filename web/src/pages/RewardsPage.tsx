@@ -12,15 +12,7 @@ export const RewardsPage: React.FC = () => {
         });
     }, []);
 
-    const [claimed, setClaimed] = React.useState(false);
 
-    const handleClaim = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Simulate API call
-        setTimeout(() => {
-            setClaimed(true);
-        }, 1000);
-    };
 
     return (
         <div className="min-h-screen bg-dark text-white font-sans relative overflow-x-hidden selection:bg-cyan selection:text-dark">
@@ -48,13 +40,13 @@ export const RewardsPage: React.FC = () => {
             <section className="min-h-screen pt-32 pb-20 relative z-10">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16" data-aos="fade-down">
-                        <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">Eco <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan to-primary">Rewards</span></h1>
+                        <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4">Recycling & <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan to-primary">Rewards</span></h1>
                         <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-                            Get rewarded for responsible e-waste management. Securely wipe your device and earn perks.
+                            Responsibly dispose of your e-waste and get rewarded. We partner with certified recyclers to ensure zero landfill impact.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8 mb-16 max-w-6xl mx-auto">
+                    <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-6xl mx-auto">
                         {/* Reward Card 1 */}
                         <div className="glass-panel p-8 rounded-2xl text-center hover:border-cyan/50 transition-all group" data-aos="fade-up">
                             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-green-500/20 transition-colors">
@@ -83,33 +75,77 @@ export const RewardsPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Claim Form */}
-                    <div className="max-w-xl mx-auto glass-panel p-8 rounded-2xl" data-aos="fade-up" data-aos-delay="300">
-                        <h3 className="text-2xl font-bold mb-6 text-center text-white">Claim Your Reward</h3>
-
-                        {!claimed ? (
-                            <form onSubmit={handleClaim} className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Certificate ID</label>
-                                    <input type="text" placeholder="Enter your erasure certificate ID" required className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-cyan focus:outline-none transition-colors" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
-                                    <input type="email" placeholder="Where to send the reward" required className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-cyan focus:outline-none transition-colors" />
-                                </div>
-                                <button type="submit" className="w-full py-4 rounded-lg bg-gradient-to-r from-primary to-cyan text-white font-bold hover:opacity-90 transition-all shadow-lg shadow-cyan/20">
-                                    Claim Reward
-                                </button>
-                            </form>
-                        ) : (
-                            <div className="text-center py-8 animate-in zoom-in duration-300">
-                                <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Check className="w-8 h-8 text-green-500" />
-                                </div>
-                                <h4 className="text-xl font-bold text-white mb-2">Claim Submitted!</h4>
-                                <p className="text-gray-400 text-sm">We've sent a confirmation email. Your reward will be processed within 24 hours.</p>
+                    {/* Recycling Partners Section */}
+                    <div className="max-w-6xl mx-auto" data-aos="fade-up" data-aos-delay="300">
+                        <div className="flex items-center gap-4 mb-8">
+                            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
+                                <Check className="text-green-400 w-6 h-6" />
                             </div>
-                        )}
+                            <div>
+                                <h2 className="text-3xl font-bold text-white">Certified Recycling Partners</h2>
+                                <p className="text-gray-400 text-sm">Drop off your wiped devices at these verified locations.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Partner 1 */}
+                            <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all">
+                                <h3 className="font-bold text-lg text-white mb-1">EcoCycle Solutions</h3>
+                                <p className="text-cyan text-sm mb-4">E-Steward Certified</p>
+                                <p className="text-gray-400 text-sm mb-2">📍 123 Green Way, Tech City</p>
+                                <p className="text-gray-400 text-sm mb-4">📞 (555) 123-4567</p>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-white/5 px-2 py-1 rounded">Mobile</span>
+                                    <span className="bg-white/5 px-2 py-1 rounded">Laptops</span>
+                                </div>
+                            </div>
+
+                            {/* Partner 2 */}
+                            <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all">
+                                <h3 className="font-bold text-lg text-white mb-1">GreenTech Recyclers</h3>
+                                <p className="text-cyan text-sm mb-4">R2 Certified</p>
+                                <p className="text-gray-400 text-sm mb-2">📍 45 Sustainable Blvd, Eco Park</p>
+                                <p className="text-gray-400 text-sm mb-4">📞 (555) 987-6543</p>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-white/5 px-2 py-1 rounded">All Electronics</span>
+                                </div>
+                            </div>
+
+                            {/* Partner 3 */}
+                            <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all">
+                                <h3 className="font-bold text-lg text-white mb-1">Urban Mining Co.</h3>
+                                <p className="text-cyan text-sm mb-4">ISO 14001</p>
+                                <p className="text-gray-400 text-sm mb-2">📍 789 Circuit Ave, Innovation District</p>
+                                <p className="text-gray-400 text-sm mb-4">📞 (555) 456-7890</p>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-white/5 px-2 py-1 rounded">Batteries</span>
+                                    <span className="bg-white/5 px-2 py-1 rounded">Phones</span>
+                                </div>
+                            </div>
+
+                            {/* Partner 4 */}
+                            <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all">
+                                <h3 className="font-bold text-lg text-white mb-1">ReTEK Loop</h3>
+                                <p className="text-cyan text-sm mb-4">R2 Certified</p>
+                                <p className="text-gray-400 text-sm mb-2">📍 101 Silicon Valley, Digital Hub</p>
+                                <p className="text-gray-400 text-sm mb-4">📞 (555) 777-8888</p>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-white/5 px-2 py-1 rounded">Servers</span>
+                                    <span className="bg-white/5 px-2 py-1 rounded">HDDs</span>
+                                </div>
+                            </div>
+
+                            {/* Partner 5 */}
+                            <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 transition-all">
+                                <h3 className="font-bold text-lg text-white mb-1">Circular Tech</h3>
+                                <p className="text-cyan text-sm mb-4">Zero Waste Certified</p>
+                                <p className="text-gray-400 text-sm mb-2">📍 202Future Drive, Uptown</p>
+                                <p className="text-gray-400 text-sm mb-4">📞 (555) 222-3333</p>
+                                <div className="flex gap-2 text-xs">
+                                    <span className="bg-white/5 px-2 py-1 rounded">Consumer Electronics</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
