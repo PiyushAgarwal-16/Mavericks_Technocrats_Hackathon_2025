@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api, VerificationResult } from '../services/api';
 import { Search, CheckCircle, XCircle, FileText, Smartphone, HardDrive, Calendar, Key, AlertTriangle, ArrowLeft, Loader2, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export const VerifyPage: React.FC = () => {
-  const [wipeId, setWipeId] = useState('');
+  const [searchParams] = useSearchParams();
+  const idFromUrl = searchParams.get('id') || '';
+  
+  const [wipeId, setWipeId] = useState(idFromUrl);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Auto-verify if ID is in URL
+  useEffect(() => {
+    if (idFromUrl && !loading && !result && !error) {
+      // Trigger verification automatically
+      handleVerify(new Event('submit') as any);
+    }
+  }, [idFromUrl]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();

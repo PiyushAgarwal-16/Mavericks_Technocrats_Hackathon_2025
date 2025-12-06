@@ -135,9 +135,19 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
   }
 
   Future<void> _openVerificationUrl() async {
-    if (_verificationUrl == null) return;
+    // Use verification URL if available, otherwise construct one with the certificate ID
+    String urlToOpen;
+    if (_verificationUrl != null && _verificationUrl!.isNotEmpty) {
+      urlToOpen = _verificationUrl!;
+    } else if (_certificateId != null && _certificateId!.isNotEmpty) {
+      // Construct verification URL with certificate ID
+      urlToOpen = 'https://web-five-neon-95.vercel.app/verify?id=$_certificateId';
+    } else {
+      // Just open the verification page
+      urlToOpen = 'https://web-five-neon-95.vercel.app/verify';
+    }
     
-    final uri = Uri.parse(_verificationUrl!);
+    final uri = Uri.parse(urlToOpen);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -302,17 +312,16 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  if (_verificationUrl != null)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _openVerificationUrl,
-                        style: OutlinedButton.styleFrom(
-                           padding: const EdgeInsets.symmetric(vertical: 16),
-                           side: const BorderSide(color: AppColors.cyan),
-                        ),
-                        child: Text('VERIFY ONLINE', style: TextStyle(color: AppColors.cyan)),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _openVerificationUrl,
+                      style: OutlinedButton.styleFrom(
+                         padding: const EdgeInsets.symmetric(vertical: 16),
+                         side: const BorderSide(color: AppColors.cyan),
                       ),
+                      child: Text('VERIFY ONLINE', style: TextStyle(color: AppColors.cyan)),
                     ),
+                  ),
                 ],
               ),
               

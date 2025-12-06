@@ -186,7 +186,8 @@ export const validateCertificateId = async (req: AuthRequest, res: Response): Pr
     const { wipeId } = req.params;
 
     // Validate format: ZT-[timestamp]-[random hex]
-    const formatRegex = /^ZT-\d{13,}-[A-F0-9]+$/i;
+    // The 'i' flag makes it case-insensitive, so both upper and lowercase hex work
+    const formatRegex = /^ZT-\d{13}-[A-F0-9]+$/i;
     const isValidFormat = formatRegex.test(wipeId);
 
     if (!isValidFormat) {
