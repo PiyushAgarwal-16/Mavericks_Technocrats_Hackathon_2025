@@ -33,8 +33,12 @@ export const VerifyPage: React.FC = () => {
     setResult(null);
 
     try {
+      console.log('🔍 Validating certificate ID:', wipeId.trim());
+      
       // First, validate the certificate ID
       const validation = await api.certificates.validate(wipeId.trim());
+      
+      console.log('📋 Validation result:', validation);
       
       if (!validation.valid) {
         // Invalid format - likely fake

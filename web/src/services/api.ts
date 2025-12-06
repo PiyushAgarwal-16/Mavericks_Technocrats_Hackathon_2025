@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Configure backend URL - can be overridden via environment variable
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+// Default to Railway production URL if not set (for Vercel deployment)
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://maverickstechnocratshackathon2025-production.up.railway.app';
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
