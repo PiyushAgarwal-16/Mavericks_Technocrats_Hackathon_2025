@@ -9,6 +9,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { AdminPage } from './pages/AdminPage';
 import { DownloadPage } from './pages/DownloadPage';
 import { ComparePage } from './pages/ComparePage';
+import { AwarenessPage } from './pages/AwarenessPage';
+import { RewardsPage } from './pages/RewardsPage';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/download" element={<DownloadPage />} />
           <Route path="/compare" element={<ComparePage />} />
+          <Route path="/awareness" element={<AwarenessPage />} />
+          <Route path="/rewards" element={<RewardsPage />} />
           <Route
             path="/dashboard"
             element={

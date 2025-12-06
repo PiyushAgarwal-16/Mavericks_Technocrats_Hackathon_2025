@@ -44,6 +44,8 @@ export const HomePage: React.FC = () => {
               <Link to="/download" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Download</Link>
               <Link to="/verify" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Certificate</Link>
               <Link to="/compare" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Compare</Link>
+              <Link to="/rewards" className="text-sm font-medium text-gray-400 hover:text-white transition-colors text-cyan glow-text">Rewards</Link>
+              <Link to="/awareness" className="text-sm font-medium text-gray-400 hover:text-white transition-colors">Awareness</Link>
 
               {isAuthenticated ? (
                 <Link to="/dashboard" className="erase-now-btn px-6 py-2 rounded-full btn-glow text-white font-bold text-sm tracking-wide">
@@ -73,6 +75,8 @@ export const HomePage: React.FC = () => {
             <Link to="/download" className="block py-2 text-gray-400 hover:text-white">Download</Link>
             <Link to="/verify" className="block py-2 text-gray-400 hover:text-white">Certificate</Link>
             <Link to="/compare" className="block py-2 text-gray-400 hover:text-white">Compare</Link>
+            <Link to="/rewards" className="block py-2 text-cyan font-bold">Rewards</Link>
+            <Link to="/awareness" className="block py-2 text-gray-400 hover:text-white">Awareness</Link>
             <Link to={isAuthenticated ? "/dashboard" : "/login"} className="erase-now-btn w-full py-3 rounded-lg btn-glow text-white font-bold text-center">
               {isAuthenticated ? "Dashboard" : "Sign In"}
             </Link>
