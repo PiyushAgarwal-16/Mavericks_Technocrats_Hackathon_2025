@@ -100,8 +100,21 @@ class _CertificatePreviewScreenState extends State<CertificatePreviewScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('SAVED TO IDERIVE: ${usbFile.path}'),
+                  content: Row(
+                    children: [
+                      const Icon(Icons.usb, color: Colors.black),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'SAVED TO IDERIVE: ${usbFile.path}',
+                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
                   backgroundColor: AppColors.cyan,
+                  behavior: SnackBarBehavior.floating, // Make it floating to avoid overlapping bottom bar
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               );
             }

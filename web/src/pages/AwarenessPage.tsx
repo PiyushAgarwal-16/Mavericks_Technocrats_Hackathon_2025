@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, ChevronDown, HelpCircle, Menu, X, ArrowLeft } from 'lucide-react';
+import { Shield, ChevronDown, HelpCircle, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
