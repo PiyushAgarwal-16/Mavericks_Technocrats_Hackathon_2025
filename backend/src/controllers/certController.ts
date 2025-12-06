@@ -110,10 +110,18 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
     }
 
     // Reconstruct payload for verification (must match signing payload exactly)
-    // Note: userId is populated, so we need to extract the _id
-    const userId = (certificate.userId as any)._id
-      ? (certificate.userId as any)._id.toString()
-      : certificate.userId.toString();
+    // Handle both ObjectId (populated User) and string (API key agent)
+    let userId: string;
+    if (typeof certificate.userId === 'string') {
+      // Already a string (e.g., "agent-001")
+      userId = certificate.userId;
+    } else if ((certificate.userId as any)._id) {
+      // Populated User object - extract _id
+      userId = (certificate.userId as any)._id.toString();
+    } else {
+      // ObjectId reference
+      userId = certificate.userId.toString();
+    }
     
     const certPayload = {
       wipeId: certificate.wipeId,
@@ -125,8 +133,13 @@ export const getCertificate = async (req: AuthRequest, res: Response): Promise<v
       logHash: certificate.logHash,
     };
 
+    console.log('🔍 Verification payload:', JSON.stringify(certPayload, null, 2));
+    console.log('📝 Stored signature:', certificate.signature.substring(0, 50) + '...');
+
     // Verify signature using canonicalized payload
     const signatureValid = verifyCertificateSignature(certPayload, certificate.signature);
+    
+    console.log(signatureValid ? '✅ Signature valid' : '❌ Signature invalid');
 
     // Get associated wipe log and verify log hash
     let wipeLog = null;
