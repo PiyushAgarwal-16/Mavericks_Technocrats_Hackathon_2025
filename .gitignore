@@ -60,3 +60,6 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Partner Code Integration
+Partner_Code/
