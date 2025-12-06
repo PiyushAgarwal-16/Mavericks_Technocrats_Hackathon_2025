@@ -32,7 +32,11 @@ export const createCertificate = async (req: AuthRequest, res: Response): Promis
     const logHash = generateHash(logContent);
 
     // Use consistent timestamp for both signing and storage
-    const certTimestamp = timestamp || new Date().toISOString();
+    // Normalize to JS Date precision (milliseconds) to match what Mongoose will store
+    // This handles cases where client sends microseconds (e.g. Flutter .toIso8601String())
+    // which Mongoose truncates, causing signature mismatches.
+    const dateObj = timestamp ? new Date(timestamp) : new Date();
+    const certTimestamp = dateObj.toISOString();
 
     // Prepare certificate payload for signing (includes all required fields)
     const certPayload = {
